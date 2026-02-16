@@ -37,11 +37,31 @@ function App() {
     console.log(response.data);
   }
 
+  let ws: WebSocket;
   const handleConnectToWs = () => {
-    const ws = new WebSocket("wss://ws.story-point.xyz");
+    ws = new WebSocket("wss://ws.story-point.xyz");
     ws.onopen = () => {
       console.log("WebSocket connected");
     };
+    ws.onclose = (event) => {
+      console.log("Connection closed");
+      console.log("code:", event.code);
+      console.log("reason:", event.reason);
+      console.log("wasClean:", event.wasClean);
+    }
+    ws.onmessage = (event) => {
+      console.log("Message received: ", event);
+    }
+    ws.onerror = (error) => {
+      console.log(error);
+    }
+  }
+
+  const handleSendMessage = () => {
+    ws.send(JSON.stringify({
+      "action": "test",
+      "message": "hello"
+    }));
   }
 
   return (
@@ -65,6 +85,8 @@ function App() {
         <button onClick={handleCreateRoom}>Create Room</button>
         <br />
         <button onClick={handleConnectToWs}>Connect to WebSocket</button>
+        <br />
+        <button onClick={handleSendMessage}>Send WebSocket Message</button>
         <p>
           Edit <code>src/App.tsx</code> , and save to test HMR
         </p>
