@@ -1,5 +1,6 @@
 import {useState} from "react";
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 
 const SignUp = () => {
 
@@ -11,8 +12,8 @@ const SignUp = () => {
   const [confirmedPassword, setConfirmedPassword] = useState<string>("");
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const navigate = useNavigate();
 
   const handleSignUp = async (event: any) => {
     event.preventDefault();
@@ -176,7 +177,10 @@ const SignUp = () => {
 
         <p className="mt-10 text-center text-sm/6 text-gray-500">
           Already have an account?{' '}
-          <a className="font-semibold text-indigo-600 hover:text-indigo-500">
+          <a
+            className="font-semibold text-indigo-600 hover:text-indigo-500 cursor-pointer"
+            onClick={() => navigate("/log-in")}
+          >
             Log In
           </a>
         </p>
