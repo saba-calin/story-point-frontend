@@ -28,6 +28,9 @@ jobs:
 
       - name: Build React App
         run: npm run build:no-check
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_WS_BASE_URL: ${{ secrets.VITE_WS_BASE_URL }}
 
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
