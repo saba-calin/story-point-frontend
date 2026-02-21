@@ -1,6 +1,7 @@
 import {useState} from "react";
-import axios from "axios";
 import {useNavigate} from "react-router-dom";
+import type {LogInRequest} from "../util/types.ts";
+import authApi from "../api/authApi.ts";
 
 const LogIn = () => {
 
@@ -17,11 +18,13 @@ const LogIn = () => {
     setIsLoading(true);
 
     try {
-      await axios.post(
-        "https://api.story-point.xyz/log-in",
-        {username, password},
-        {withCredentials: true}
-      );
+      const logInRequest: LogInRequest = {
+        username: username,
+        password: password
+      };
+      await authApi.logIn(logInRequest);
+      navigate("/dashboard");
+
     } catch (error: any) {
       setErrorMessage(error.response.data.message || "Something went wrong");
     } finally {

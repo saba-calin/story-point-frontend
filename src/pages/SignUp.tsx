@@ -1,6 +1,7 @@
 import {useState} from "react";
-import axios from "axios";
 import {useNavigate} from "react-router-dom";
+import type {SignUpRequest} from "../util/types.ts";
+import authApi from "../api/authApi.ts";
 
 const SignUp = () => {
 
@@ -20,7 +21,22 @@ const SignUp = () => {
     setErrorMessage("");
     setIsLoading(true);
 
+    if (password !== confirmedPassword) {
+      setErrorMessage("Passwords must match");
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      const signUpRequest: SignUpRequest = {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        username: username,
+        password: password
+      }
+      await authApi.signUp(signUpRequest);
+      navigate("/dashboard");
 
     } catch (error: any) {
       setErrorMessage(error.response.data.message || "Something went wrong");
@@ -170,7 +186,7 @@ const SignUp = () => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
               )}
-              {isLoading ? "Loggin in..." : "Log in"}
+              {isLoading ? "Signing up..." : "Sign up"}
             </button>
           </div>
         </form>
