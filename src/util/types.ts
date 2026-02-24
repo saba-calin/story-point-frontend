@@ -11,6 +11,21 @@ export interface SignUpRequest {
   password: string;
 }
 
+export interface RoomJoinedEvent {
+  players: string[],
+  room: CreateRoomResponse,
+  stories: string[]
+}
+
+export interface PlayerJoinedEvent {
+  action: string;
+  player: Player;
+}
+
+export interface Player {
+  username: string;
+}
+
 const RoomStatus = {
   OPEN: "OPEN",
   CLOSED: "CLOSED"
