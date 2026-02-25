@@ -3,9 +3,9 @@ import {Navigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.tsx";
 
 const ProtectedRoute = ({children}: {children: ReactNode}) => {
-  const {user, isLoading} = useContext(AuthContext)!;
+  const {user, isAuthLoading} = useContext(AuthContext)!;
 
-  if (isLoading) {
+  if (isAuthLoading) {
     return (
       <div>
         Loading Auth Me
