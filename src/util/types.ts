@@ -63,7 +63,7 @@ const RoomStatus = {
 } as const;
 export type RoomStatus = typeof RoomStatus[keyof typeof RoomStatus];
 
-const StoryStatus = {
+export const StoryStatus = {
   ACTIVE: "ACTIVE",
   NON_ACTIVE: "NON_ACTIVE"
 } as const;

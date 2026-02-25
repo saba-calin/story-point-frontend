@@ -1,14 +1,15 @@
 import {useNavigate, useParams} from "react-router-dom";
 import {useContext, useEffect, useRef, useState} from "react";
-import type {
-  PlayerJoinedEvent,
-  RoomJoinedEvent,
-  Story,
-  StoryCreatedEvent,
-  StorySetActiveEvent
+import {
+  type PlayerJoinedEvent,
+  type RoomJoinedEvent,
+  type Story,
+  type StoryCreatedEvent,
+  type StorySetActiveEvent, StoryStatus
 } from "../util/types.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
 import CreateStoryModal from "../components/modal/CreateStoryModal.tsx";
+import SetActiveStoryModal from "../components/modal/SetStoryActiveModal.tsx";
 
 const Room = () => {
 
@@ -21,9 +22,15 @@ const Room = () => {
 
   const [isPageLoading, setIsPageLoading] = useState<boolean>(true);
   const [isCreateStoryLoading, setIsCreateStoryLoading] = useState<boolean>(false);
-  const [setIsActiveStoryLoading, setSetIsActiveStoryLoading] = useState<boolean>(false);
+  const [isSetActiveStoryLoading, setIsSetActiveStoryLoading] = useState<boolean>(false);
 
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
+  const [setActiveStoryModalData, setSetActiveStoryModalData] = useState<{
+    storyId: string,
+    storyName: string,
+    storyDescription: string,
+    isActive: boolean
+  } | null>(null);
 
   const {user} = useContext(AuthContext)!;
 
@@ -51,6 +58,7 @@ const Room = () => {
         setPlayers(roomJoinedEvent.players);
         setRoomOwner(roomJoinedEvent.room.ownerUsername);
         setStories(roomJoinedEvent.stories);
+        setActiveStory(roomJoinedEvent.stories.find(s => s.status === StoryStatus.ACTIVE) || null);
 
         setIsPageLoading(false);
       } else if (eventData.action === "playerJoined") {
@@ -66,6 +74,9 @@ const Room = () => {
       } else if (eventData.action === "storySetActive") {
         const storySetActiveEvent = eventData as StorySetActiveEvent;
         setActiveStory(storySetActiveEvent.story);
+
+        setIsSetActiveStoryLoading(false);
+        setSetActiveStoryModalData(null);
       }
     }
 
@@ -92,6 +103,7 @@ const Room = () => {
       roomId: roomId,
       storyId: storyId
     }));
+    setIsSetActiveStoryLoading(true);
   }
 
   if (isPageLoading) {
@@ -122,7 +134,12 @@ const Room = () => {
         return (
           <div
             key={story.storyId}
-            onClick={() => handleSetActiveStory(story.storyId)}
+            onClick={() => setSetActiveStoryModalData({
+              storyId: story.storyId,
+              storyName: story.name,
+              storyDescription: story.description,
+              isActive: isActive
+            })}
             style={{
               cursor: "pointer",
               color: isActive ? "red" : "inherit",
@@ -134,11 +151,27 @@ const Room = () => {
         );
       })}
 
+      <div>
+        Active Story: name: {activeStory?.name}, description: {activeStory?.description}
+      </div>
+
       {isCreateStoryModalOpen && (
         <CreateStoryModal
           onClose={() => setIsCreateStoryModalOpen(false)}
           onCreateStory={handleCreateStory}
           isLoading={isCreateStoryLoading}
+        />
+      )}
+
+      {setActiveStoryModalData && (
+        <SetActiveStoryModal
+          onClose={() => setSetActiveStoryModalData(null)}
+          onSetActive={() => handleSetActiveStory(setActiveStoryModalData.storyId)}
+          storyName={setActiveStoryModalData.storyName}
+          storyDescription={setActiveStoryModalData.storyDescription}
+          isActive={setActiveStoryModalData.isActive}
+          isRoomOwner={roomOwner === user?.username}
+          isLoading={isSetActiveStoryLoading}
         />
       )}
     </>

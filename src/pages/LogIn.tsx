@@ -3,6 +3,7 @@ import {Navigate, useNavigate} from "react-router-dom";
 import type {LogInRequest, User} from "../util/types.ts";
 import authApi from "../api/authApi.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
+import AuthLoader from "../components/AuthLoader.tsx";
 
 const LogIn = () => {
 
@@ -15,11 +16,7 @@ const LogIn = () => {
 
   const {user, setUser, isAuthLoading} = useContext(AuthContext)!;
   if (isAuthLoading) {
-    return (
-      <div>
-        Loading auth...
-      </div>
-    );
+    return <AuthLoader />;
   }
   if (user) {
     return <Navigate to="/dashboard" replace />
