@@ -1,7 +1,8 @@
-import {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import type {SignUpRequest} from "../util/types.ts";
+import {useContext, useState} from "react";
+import {Navigate, useNavigate} from "react-router-dom";
+import type {SignUpRequest, User} from "../util/types.ts";
 import authApi from "../api/authApi.ts";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const SignUp = () => {
 
@@ -15,6 +16,18 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
+
+  const {user, setUser, isAuthLoading} = useContext(AuthContext)!;
+  if (isAuthLoading) {
+    return (
+      <div>
+        Loading auth...
+      </div>
+    );
+  }
+  if (user) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const handleSignUp = async (event: any) => {
     event.preventDefault();
@@ -35,7 +48,10 @@ const SignUp = () => {
         username: username,
         password: password
       }
-      await authApi.signUp(signUpRequest);
+      const response = await authApi.signUp(signUpRequest);
+      const user: User = response.data.user;
+
+      setUser(user);
       navigate("/dashboard");
 
     } catch (error: any) {

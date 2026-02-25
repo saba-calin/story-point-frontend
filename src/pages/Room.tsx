@@ -42,6 +42,10 @@ const Room = () => {
         setIsCreateStoryLoading(false);
       }
     }
+
+    ws.onerror = (event) => {
+      console.log(event);
+    }
   }, []);
 
   const handleCreateStory = () => {

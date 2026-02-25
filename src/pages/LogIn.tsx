@@ -1,7 +1,8 @@
-import {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import type {LogInRequest} from "../util/types.ts";
+import {useContext, useState} from "react";
+import {Navigate, useNavigate} from "react-router-dom";
+import type {LogInRequest, User} from "../util/types.ts";
 import authApi from "../api/authApi.ts";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const LogIn = () => {
 
@@ -11,6 +12,18 @@ const LogIn = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
+
+  const {user, setUser, isAuthLoading} = useContext(AuthContext)!;
+  if (isAuthLoading) {
+    return (
+      <div>
+        Loading auth...
+      </div>
+    );
+  }
+  if (user) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const handleLogIn = async (event: any) => {
     event.preventDefault();
@@ -22,7 +35,10 @@ const LogIn = () => {
         username: username,
         password: password
       };
-      await authApi.logIn(logInRequest);
+      const response = await authApi.logIn(logInRequest);
+      const user: User = response.data.user;
+
+      setUser(user);
       navigate("/dashboard");
 
     } catch (error: any) {

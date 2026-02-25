@@ -11,6 +11,19 @@ export interface SignUpRequest {
   password: string;
 }
 
+export interface User {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  setUser: (user: User | null) => void;
+  isAuthLoading: boolean;
+}
+
 export interface RoomJoinedEvent {
   players: string[],
   room: CreateRoomResponse,
