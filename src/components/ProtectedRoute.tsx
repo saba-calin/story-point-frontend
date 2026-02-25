@@ -1,16 +1,13 @@
 import {type ReactNode, useContext} from "react";
 import {Navigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.tsx";
+import AuthLoader from "./AuthLoader.tsx";
 
 const ProtectedRoute = ({children}: {children: ReactNode}) => {
   const {user, isAuthLoading} = useContext(AuthContext)!;
 
   if (isAuthLoading) {
-    return (
-      <div>
-        Loading Auth Me
-      </div>
-    );
+    return <AuthLoader />;
   }
 
   if (!user) {

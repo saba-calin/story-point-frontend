@@ -1,16 +1,21 @@
 import {useNavigate, useParams} from "react-router-dom";
-import {useEffect, useRef, useState} from "react";
-import type {PlayerJoinedEvent, RoomJoinedEvent} from "../util/types.ts";
+import {useContext, useEffect, useRef, useState} from "react";
+import type {CreateRoomResponse, PlayerJoinedEvent, RoomJoinedEvent} from "../util/types.ts";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Room = () => {
 
   const {roomId} = useParams();
 
   const [players, setPlayers] = useState<string[]>([]);
+  const [roomOwner, setRoomOwner] = useState<string | null>(null);
   const [stories, setStories] = useState([]);
+  const [activeStory, setActiveStory] = useState();
 
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isCreateStoryLoading, setIsCreateStoryLoading] = useState(false);
+
+  const {user} = useContext(AuthContext)!;
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -34,6 +39,7 @@ const Room = () => {
       if (eventData.action === "roomJoined") {
         const roomJoinedEvent = eventData as RoomJoinedEvent;
         setPlayers(roomJoinedEvent.players);
+        setRoomOwner(roomJoinedEvent.room.ownerUsername);
         setIsPageLoading(false);
       } else if (eventData.action === "playerJoined") {
         const playerJoinedEvent = eventData as PlayerJoinedEvent;
@@ -46,6 +52,8 @@ const Room = () => {
     ws.onerror = (event) => {
       console.log(event);
     }
+
+    return () => ws.close();
   }, []);
 
   const handleCreateStory = () => {
@@ -74,19 +82,23 @@ const Room = () => {
         <div key={player}>{player}  </div>
       ))}
 
-      {isCreateStoryLoading ? (
-        <div>
-          Creating Story...
-        </div>
-      ) : (
-        <button onClick={handleCreateStory}>
-          Create story
-        </button>
-      )}
+      {roomOwner === user?.username && (
+        <>
+          {isCreateStoryLoading ? (
+            <div>
+              Creating Story...
+            </div>
+          ) : (
+            <button onClick={handleCreateStory}>
+              Create story
+            </button>
+          )}
 
-      <div>
-        <h4>Active Story</h4>
-      </div>
+          <div>
+            <h4>Active Story</h4>
+          </div>
+        </>
+      )}
     </>
   );
 }
