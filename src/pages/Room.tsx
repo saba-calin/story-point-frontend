@@ -5,7 +5,7 @@ import {
   type RoomJoinedEvent,
   type Story,
   type StoryCreatedEvent,
-  type StorySetActiveEvent, StoryStatus
+  type StorySetActiveEvent, StoryStatus, VALID_VOTES
 } from "../util/types.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
 import CreateStoryModal from "../components/modal/CreateStoryModal.tsx";
@@ -77,6 +77,8 @@ const Room = () => {
 
         setIsSetActiveStoryLoading(false);
         setSetActiveStoryModalData(null);
+      } else if (eventData.action === "playerVoted") {
+
       }
     }
 
@@ -104,6 +106,14 @@ const Room = () => {
       storyId: storyId
     }));
     setIsSetActiveStoryLoading(true);
+  }
+
+  const handleVote = (voteValue: string) => {
+    wsRef.current?.send(JSON.stringify({
+      action: "vote",
+
+    }));
+    console.log(voteValue);
   }
 
   if (isPageLoading) {
@@ -140,11 +150,7 @@ const Room = () => {
               storyDescription: story.description,
               isActive: isActive
             })}
-            style={{
-              cursor: "pointer",
-              color: isActive ? "red" : "inherit",
-              fontWeight: isActive ? "bold" : "normal"
-            }}
+            className={`cursor-pointer ${isActive ? 'text-red-500 font-bold' : ''}`}
           >
             {story.name}
           </div>
@@ -154,6 +160,12 @@ const Room = () => {
       <div>
         Active Story: name: {activeStory?.name}, description: {activeStory?.description}
       </div>
+
+      {VALID_VOTES.map((voteValue: string) => (
+        <div key={voteValue} onClick={() => handleVote(voteValue)}>
+          {voteValue}
+        </div>
+      ))}
 
       {isCreateStoryModalOpen && (
         <CreateStoryModal

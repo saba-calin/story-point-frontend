@@ -73,6 +73,8 @@ export interface CreateRoomRequest {
   name: string;
 }
 
+export const VALID_VOTES = ["1", "2", "3", "5", "8", "13", "21", "?"];
+
 export interface CreateRoomResponse {
   roomId: string,
   name: string,

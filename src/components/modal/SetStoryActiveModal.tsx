@@ -31,7 +31,7 @@ const SetActiveStoryModal = ({onClose, onSetActive, storyName, storyDescription,
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-5">
-          {isActive ? (
+          {(isActive || !isRoomOwner) ? (
             <div>
               <h2 className="text-base font-semibold text-gray-900">Story details</h2>
             </div>
