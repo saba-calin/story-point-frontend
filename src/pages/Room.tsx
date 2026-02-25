@@ -1,7 +1,14 @@
 import {useNavigate, useParams} from "react-router-dom";
 import {useContext, useEffect, useRef, useState} from "react";
-import type {CreateRoomResponse, PlayerJoinedEvent, RoomJoinedEvent} from "../util/types.ts";
+import type {
+  PlayerJoinedEvent,
+  RoomJoinedEvent,
+  Story,
+  StoryCreatedEvent,
+  StorySetActiveEvent
+} from "../util/types.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
+import CreateStoryModal from "../components/modal/CreateStoryModal.tsx";
 
 const Room = () => {
 
@@ -9,11 +16,14 @@ const Room = () => {
 
   const [players, setPlayers] = useState<string[]>([]);
   const [roomOwner, setRoomOwner] = useState<string | null>(null);
-  const [stories, setStories] = useState([]);
-  const [activeStory, setActiveStory] = useState();
+  const [stories, setStories] = useState<Story[]>([]);
+  const [activeStory, setActiveStory] = useState<Story | null>(null);
 
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const [isCreateStoryLoading, setIsCreateStoryLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState<boolean>(true);
+  const [isCreateStoryLoading, setIsCreateStoryLoading] = useState<boolean>(false);
+  const [setIsActiveStoryLoading, setSetIsActiveStoryLoading] = useState<boolean>(false);
+
+  const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
 
   const {user} = useContext(AuthContext)!;
 
@@ -40,12 +50,22 @@ const Room = () => {
         const roomJoinedEvent = eventData as RoomJoinedEvent;
         setPlayers(roomJoinedEvent.players);
         setRoomOwner(roomJoinedEvent.room.ownerUsername);
+        setStories(roomJoinedEvent.stories);
+
         setIsPageLoading(false);
       } else if (eventData.action === "playerJoined") {
         const playerJoinedEvent = eventData as PlayerJoinedEvent;
+
         setPlayers(prevPlayers => [...prevPlayers, playerJoinedEvent.player.username]);
-      } else if (eventData.action == "storyCreated") {
+      } else if (eventData.action === "storyCreated") {
+        const storyCreatedEvent = eventData as StoryCreatedEvent;
+        setStories(stories => [...stories, storyCreatedEvent.story]);
+
         setIsCreateStoryLoading(false);
+        setIsCreateStoryModalOpen(false);
+      } else if (eventData.action === "storySetActive") {
+        const storySetActiveEvent = eventData as StorySetActiveEvent;
+        setActiveStory(storySetActiveEvent.story);
       }
     }
 
@@ -56,14 +76,22 @@ const Room = () => {
     return () => ws.close();
   }, []);
 
-  const handleCreateStory = () => {
+  const handleCreateStory = (name: string, description: string) => {
     wsRef.current?.send(JSON.stringify({
       action: "create-story",
       roomId: roomId,
-      name: "story_name",
-      description: "description"
+      name: name,
+      description: description
     }));
     setIsCreateStoryLoading(true);
+  }
+
+  const handleSetActiveStory = (storyId: string) => {
+    wsRef.current?.send(JSON.stringify({
+      action: "set-active-story",
+      roomId: roomId,
+      storyId: storyId
+    }));
   }
 
   if (isPageLoading) {
@@ -83,21 +111,35 @@ const Room = () => {
       ))}
 
       {roomOwner === user?.username && (
-        <>
-          {isCreateStoryLoading ? (
-            <div>
-              Creating Story...
-            </div>
-          ) : (
-            <button onClick={handleCreateStory}>
-              Create story
-            </button>
-          )}
+        <button onClick={() => setIsCreateStoryModalOpen(true)}>
+          Create Story
+        </button>
+      )}
 
-          <div>
-            <h4>Active Story</h4>
+      {stories.map((story: Story) => {
+        const isActive = activeStory?.storyId === story.storyId;
+
+        return (
+          <div
+            key={story.storyId}
+            onClick={() => handleSetActiveStory(story.storyId)}
+            style={{
+              cursor: "pointer",
+              color: isActive ? "red" : "inherit",
+              fontWeight: isActive ? "bold" : "normal"
+            }}
+          >
+            {story.name}
           </div>
-        </>
+        );
+      })}
+
+      {isCreateStoryModalOpen && (
+        <CreateStoryModal
+          onClose={() => setIsCreateStoryModalOpen(false)}
+          onCreateStory={handleCreateStory}
+          isLoading={isCreateStoryLoading}
+        />
       )}
     </>
   );

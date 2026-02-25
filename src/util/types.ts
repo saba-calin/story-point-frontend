@@ -24,15 +24,33 @@ export interface AuthContextType {
   isAuthLoading: boolean;
 }
 
+export interface Story {
+  storyId: string;
+  roomId: string;
+  name: string;
+  description: string;
+  status: StoryStatus;
+}
+
 export interface RoomJoinedEvent {
   players: string[],
   room: CreateRoomResponse,
-  stories: string[]
+  stories: Story[]
 }
 
 export interface PlayerJoinedEvent {
   action: string;
   player: Player;
+}
+
+export interface StoryCreatedEvent {
+  action: string;
+  story: Story;
+}
+
+export interface StorySetActiveEvent {
+  action: string;
+  story: Story;
 }
 
 export interface Player {
@@ -44,6 +62,12 @@ const RoomStatus = {
   CLOSED: "CLOSED"
 } as const;
 export type RoomStatus = typeof RoomStatus[keyof typeof RoomStatus];
+
+const StoryStatus = {
+  ACTIVE: "ACTIVE",
+  NON_ACTIVE: "NON_ACTIVE"
+} as const;
+export type StoryStatus = typeof StoryStatus[keyof typeof StoryStatus];
 
 export interface CreateRoomRequest {
   name: string;
