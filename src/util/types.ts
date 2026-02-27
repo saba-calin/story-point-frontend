@@ -35,7 +35,8 @@ export interface Story {
 export interface RoomJoinedEvent {
   players: string[],
   room: CreateRoomResponse,
-  stories: Story[]
+  stories: Story[],
+  votes: Vote[]
 }
 
 export interface PlayerJoinedEvent {
@@ -51,6 +52,23 @@ export interface StoryCreatedEvent {
 export interface StorySetActiveEvent {
   action: string;
   story: Story;
+}
+
+export interface PlayerVotedEvent {
+  action: string;
+  vote: Vote;
+}
+
+export interface PlayerLeftEvent {
+  action: string;
+  player: string;
+}
+
+export interface Vote {
+  username: string;
+  storyId: string;
+  roomId: string;
+  voteValue: string;
 }
 
 export interface Player {

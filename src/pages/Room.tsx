@@ -1,7 +1,7 @@
 import {useNavigate, useParams} from "react-router-dom";
 import {useContext, useEffect, useRef, useState} from "react";
 import {
-  type PlayerJoinedEvent,
+  type PlayerJoinedEvent, type PlayerLeftEvent, type PlayerVotedEvent,
   type RoomJoinedEvent,
   type Story,
   type StoryCreatedEvent,
@@ -19,6 +19,7 @@ const Room = () => {
   const [roomOwner, setRoomOwner] = useState<string | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
+  const [votes, setVotes] = useState<Map<string, string | null>>(new Map());
 
   const [isPageLoading, setIsPageLoading] = useState<boolean>(true);
   const [isCreateStoryLoading, setIsCreateStoryLoading] = useState<boolean>(false);
@@ -59,6 +60,13 @@ const Room = () => {
         setRoomOwner(roomJoinedEvent.room.ownerUsername);
         setStories(roomJoinedEvent.stories);
         setActiveStory(roomJoinedEvent.stories.find(s => s.status === StoryStatus.ACTIVE) || null);
+        setVotes(prevVotes => {
+          const newVotes = new Map(prevVotes);
+          roomJoinedEvent.votes.forEach(vote => {
+            newVotes.set(vote.username, null);
+          });
+          return newVotes;
+        });
 
         setIsPageLoading(false);
       } else if (eventData.action === "playerJoined") {
@@ -78,7 +86,17 @@ const Room = () => {
         setIsSetActiveStoryLoading(false);
         setSetActiveStoryModalData(null);
       } else if (eventData.action === "playerVoted") {
+        const playerVotedEvent = eventData as PlayerVotedEvent;
 
+        setVotes(prevVotes => {
+          const newVotes = new Map(prevVotes);
+          newVotes.set(playerVotedEvent.vote.username, null);
+          return newVotes;
+        });
+      } else if (eventData.action == "playerLeft") {
+        const playerLeftEvent = eventData as PlayerLeftEvent;
+
+        setPlayers(prevPlayers => prevPlayers.filter(prevPlayer => prevPlayer !== playerLeftEvent.player));
       }
     }
 
@@ -111,9 +129,10 @@ const Room = () => {
   const handleVote = (voteValue: string) => {
     wsRef.current?.send(JSON.stringify({
       action: "vote",
-
+      roomId: roomId,
+      storyId: activeStory?.storyId,
+      voteValue: voteValue
     }));
-    console.log(voteValue);
   }
 
   if (isPageLoading) {
@@ -128,9 +147,6 @@ const Room = () => {
     <>
       <div>{roomId}</div>
       <br/>
-      {players.map((player: string) => (
-        <div key={player}>{player}  </div>
-      ))}
 
       {roomOwner === user?.username && (
         <button onClick={() => setIsCreateStoryModalOpen(true)}>
@@ -157,15 +173,31 @@ const Room = () => {
         );
       })}
 
-      <div>
-        Active Story: name: {activeStory?.name}, description: {activeStory?.description}
-      </div>
-
-      {VALID_VOTES.map((voteValue: string) => (
-        <div key={voteValue} onClick={() => handleVote(voteValue)}>
-          {voteValue}
+      {activeStory && (
+        <div>
+          Active Story: name: {activeStory?.name}, description: {activeStory?.description}
         </div>
+      )}
+
+      {activeStory && VALID_VOTES.map((voteValue: string) => (
+        <button key={voteValue} onClick={() => handleVote(voteValue)}>
+          {voteValue}
+        </button>
       ))}
+
+      <div>
+        <h3>Votes:</h3>
+        {players.map(player => {
+          const voteValue = votes.get(player);
+          const hasVoted = votes.has(player);
+
+          return (
+            <div key={player}>
+              {player}: {hasVoted ? (voteValue ? voteValue : '✓ Voted') : 'Not voted'}
+            </div>
+          );
+        })}
+      </div>
 
       {isCreateStoryModalOpen && (
         <CreateStoryModal
