@@ -30,6 +30,7 @@ export interface Story {
   name: string;
   description: string;
   status: StoryStatus;
+  storyEstimation: string;
 }
 
 export interface RoomJoinedEvent {
@@ -52,6 +53,7 @@ export interface StoryCreatedEvent {
 export interface StorySetActiveEvent {
   action: string;
   story: Story;
+  votes: Vote[];
 }
 
 export interface PlayerVotedEvent {
@@ -62,6 +64,14 @@ export interface PlayerVotedEvent {
 export interface PlayerLeftEvent {
   action: string;
   player: string;
+}
+
+export interface VotesRevealedEvent {
+  action: string;
+  storyId: string;
+  votes: Vote[],
+  storyEstimation: string;
+  storyEstimationRounded: string;
 }
 
 export interface Vote {
