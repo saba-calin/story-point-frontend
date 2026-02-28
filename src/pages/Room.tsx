@@ -248,8 +248,8 @@ const Room = () => {
               + New story
             </button>
           )}
-          <div
-            className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold">
+          <div onClick={() => navigate("/user-profile")}
+            className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold cursor-pointer">
             {user?.username?.charAt(0).toUpperCase()}
           </div>
         </div>

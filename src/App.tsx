@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Room from "./pages/Room.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import AuthProvider from "./context/AuthContext.tsx";
+import UserProfile from "./pages/UserProfile.tsx";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
           <Route path="/log-in" element={<LogIn />} />
 
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/user-profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route path="/room/:roomId" element={<ProtectedRoute><Room /></ProtectedRoute>} />
         </Route>
 

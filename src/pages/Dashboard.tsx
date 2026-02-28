@@ -1,12 +1,14 @@
 import {useContext, useState} from "react";
 import CreateRoomModal from "../components/modal/CreateRoomModal.tsx";
 import {AuthContext} from "../context/AuthContext.tsx";
+import {useNavigate} from "react-router-dom";
 
 const Dashboard = () => {
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
   const {user} = useContext(AuthContext)!;
+  const navigate = useNavigate();
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
@@ -18,8 +20,8 @@ const Dashboard = () => {
           </svg>
           <span className="text-sm font-semibold tracking-tight text-gray-800">Rooms</span>
         </div>
-        <div
-          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold">
+        <div onClick={() => navigate("/user-profile")}
+          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold cursor-pointer">
           {user?.username?.charAt(0).toUpperCase()}
         </div>
       </header>
