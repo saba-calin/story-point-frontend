@@ -18,9 +18,12 @@ const Landing = () => {
         </div>
         <button
           onClick={() => navigate("/log-in")}
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
         >
-          Log in →
+          Log in
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
         </button>
       </nav>
 

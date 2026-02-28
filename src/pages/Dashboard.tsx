@@ -1,17 +1,26 @@
-import {useState} from "react";
+import {useContext, useState} from "react";
 import CreateRoomModal from "../components/modal/CreateRoomModal.tsx";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Dashboard = () => {
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
+  const {user} = useContext(AuthContext)!;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
 
       <header className="px-8 py-5 flex items-center justify-between border-b border-gray-200 bg-white">
-        <span className="text-sm font-semibold tracking-tight text-gray-800">◆ Rooms</span>
-        <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold">
-          U
+        <div className="flex items-center gap-2">
+          <svg className="w-3 h-3 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 12l10 10 10-10L12 2z"/>
+          </svg>
+          <span className="text-sm font-semibold tracking-tight text-gray-800">Rooms</span>
+        </div>
+        <div
+          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold">
+          {user?.username?.charAt(0).toUpperCase()}
         </div>
       </header>
 

@@ -211,7 +211,6 @@ const Room = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
-      {/* Header */}
       <header className="px-8 py-5 flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <button
@@ -258,7 +257,6 @@ const Room = () => {
 
       <main className="flex-1 px-8 py-8 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Stories Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100">
@@ -310,9 +308,7 @@ const Room = () => {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Active Story */}
             {activeStory ? (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -328,7 +324,6 @@ const Room = () => {
                   )}
                 </div>
 
-                {/* Voting Buttons */}
                 {!activeStory.storyEstimation && (
                   <div className="mt-6">
                     <div className="text-xs font-medium text-gray-500 mb-3">Cast your vote</div>
@@ -356,7 +351,6 @@ const Room = () => {
                   </div>
                 )}
 
-                {/* Reveal Button */}
                 {roomOwner === user?.username && activeStory && (
                   <div className="mt-6 pt-6 border-t border-gray-100">
                     {isRevealingVotesLoading ? (
@@ -387,7 +381,6 @@ const Room = () => {
               </div>
             )}
 
-            {/* Players & Votes */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100">
                 <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
