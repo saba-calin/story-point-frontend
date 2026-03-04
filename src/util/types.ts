@@ -85,6 +85,13 @@ export interface Player {
   username: string;
 }
 
+export interface Rooms {
+  roomId: string;
+  username: string;
+  joinedAt: number;
+  ownerUsername: number;
+}
+
 const RoomStatus = {
   OPEN: "OPEN",
   CLOSED: "CLOSED"
@@ -109,4 +116,13 @@ export interface CreateRoomResponse {
   ownerUsername: string,
   createdAt: number,
   status: RoomStatus
+}
+
+export interface AiEstimateRequest {
+  storyName?: string;
+  storyDescription?: string;
+}
+
+export interface AiEstimateResponse {
+  estimate: string;
 }

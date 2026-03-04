@@ -1,6 +1,7 @@
 import {useNavigate, useParams} from "react-router-dom";
 import {useContext, useEffect, useRef, useState} from "react";
 import {
+  type AiEstimateResponse,
   type PlayerJoinedEvent, type PlayerLeftEvent, type PlayerVotedEvent,
   type RoomJoinedEvent,
   type Story,
@@ -10,6 +11,7 @@ import {
 import {AuthContext} from "../context/AuthContext.tsx";
 import CreateStoryModal from "../components/modal/CreateStoryModal.tsx";
 import SetActiveStoryModal from "../components/modal/SetStoryActiveModal.tsx";
+import storyApi from "../api/storyApi.ts";
 
 const Room = () => {
 
@@ -21,6 +23,8 @@ const Room = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [votes, setVotes] = useState<Map<string, string | null>>(new Map());
+  const [vote, setVote] = useState<string | null>(null);
+  const [aiEstimate, setAiEstimate] = useState<string | null>(null);
   const [hasRevealedVotes, setHasRevealedVotes] = useState<boolean>(false);
   const [showCopyUrlConfirmation, setShowCopyUrlConfirmation] = useState<boolean>(false);
 
@@ -29,6 +33,7 @@ const Room = () => {
   const [isRevealingVotesLoading, setIsRevealingVotesLoading] = useState<boolean>(false);
   const [isCreateStoryLoading, setIsCreateStoryLoading] = useState<boolean>(false);
   const [isSetActiveStoryLoading, setIsSetActiveStoryLoading] = useState<boolean>(false);
+  const [isAiEstimateLoading, setIsAiEstimateLoading] = useState<boolean>(false);
 
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
   const [setActiveStoryModalData, setSetActiveStoryModalData] = useState<{
@@ -99,6 +104,7 @@ const Room = () => {
 
         storySetActiveEvent.story.storyEstimation ? setHasRevealedVotes(true) : setHasRevealedVotes(false);
         setIsSetActiveStoryLoading(false);
+        setAiEstimate(null);
         setSetActiveStoryModalData(null);
       } else if (eventData.action === "playerVoted") {
         const playerVotedEvent = eventData as PlayerVotedEvent;
@@ -166,12 +172,17 @@ const Room = () => {
   }
 
   const handleVote = (voteValue: string) => {
+    // if (voteValue === vote) {
+    //   return;
+    // }
+
     wsRef.current?.send(JSON.stringify({
       action: "vote",
       roomId: roomId,
       storyId: activeStory?.storyId,
       voteValue: voteValue
     }));
+    // setVote(voteValue);
     setIsVotingLoading(true);
   }
 
@@ -192,6 +203,22 @@ const Room = () => {
 
   const handleGoBack = () => {
     navigate("/dashboard");
+  }
+
+  const handleAiEstimate = async () => {
+    try {
+      setIsAiEstimateLoading(true);
+      const response = await storyApi.aiEstimate({
+        storyName: activeStory?.name,
+        storyDescription: activeStory?.description
+      });
+      const data = response.data as AiEstimateResponse;
+      setAiEstimate(data.estimate);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsAiEstimateLoading(false);
+    }
   }
 
   if (isPageLoading) {
@@ -240,6 +267,34 @@ const Room = () => {
           </button>
         </div>
         <div className="flex items-center gap-3">
+          {activeStory && (
+            aiEstimate ? (
+              <div className="h-9 flex items-center gap-1.5 bg-gray-100 border border-gray-200 text-sm font-medium px-4 rounded-lg text-gray-700">
+                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                AI: {aiEstimate}
+              </div>
+            ) : isAiEstimateLoading ? (
+              <div className="flex items-center gap-2 text-gray-400">
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                <span className="text-xs text-gray-400">Estimating...</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleAiEstimate}
+                className="flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border border-gray-200 hover:border-gray-400 text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                AI estimate
+              </button>
+            )
+          )}
           {roomOwner === user?.username && (
             <button
               onClick={() => setIsCreateStoryModalOpen(true)}
@@ -341,7 +396,8 @@ const Room = () => {
                           <button
                             key={voteValue}
                             onClick={() => handleVote(voteValue)}
-                            className="bg-white hover:bg-gray-900 hover:text-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 font-semibold rounded-lg w-14 h-14 transition-all duration-150 cursor-pointer"
+                            className={`border-2 font-semibold rounded-lg w-14 h-14 transition-all duration-150 cursor-pointer 
+                              ${vote === voteValue ? 'bg-gray-900 text-white border-gray-900' : 'bg-white hover:bg-gray-900 hover:text-white border-gray-200 hover:border-gray-900 text-gray-900'}`}
                           >
                             {voteValue}
                           </button>
@@ -377,7 +433,11 @@ const Room = () => {
               <div className="bg-white rounded-xl border border-dashed border-gray-200 p-12 text-center">
                 <div className="text-2xl mb-3">◇</div>
                 <p className="text-sm font-medium text-gray-500">No active story</p>
-                <p className="text-xs text-gray-400 mt-1">Select a story from the sidebar to start voting</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {roomOwner === user?.username ?
+                    "Select a story from the sidebar to start voting" :
+                    "Waiting on the moderator to select a story"}
+                </p>
               </div>
             )}
 

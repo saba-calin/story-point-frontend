@@ -1,14 +1,35 @@
-import {useContext, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import CreateRoomModal from "../components/modal/CreateRoomModal.tsx";
 import {AuthContext} from "../context/AuthContext.tsx";
 import {useNavigate} from "react-router-dom";
+import type {Rooms} from "../util/types.ts";
+import roomApi from "../api/roomApi.ts";
 
 const Dashboard = () => {
 
   const {user} = useContext(AuthContext)!;
   const navigate = useNavigate();
 
+  const [rooms, setRooms] = useState<Rooms[] | null>(null);
+  const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(true);
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const response = await roomApi.getRooms();
+        console.log(response.data);
+        setRooms(response.data);
+      } catch (error: any) {
+        console.log(error);
+      } finally {
+        setIsFetchingRooms(false);
+      }
+    }
+
+    fetchRooms();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
@@ -40,11 +61,17 @@ const Dashboard = () => {
           </button>
         </div>
 
-        <div className="border border-dashed border-gray-200 rounded-xl py-16 flex flex-col items-center justify-center text-center">
-          <div className="text-2xl mb-3">◇</div>
-          <p className="text-sm font-medium text-gray-500">No rooms yet</p>
-          <p className="text-xs text-gray-400 mt-1">Click <span className="font-medium">+ New room</span> to create one.</p>
-        </div>
+        {isFetchingRooms ? (
+          <div>
+            Fetching Rooms
+          </div>
+        ) : (
+          <div className="border border-dashed border-gray-200 rounded-xl py-16 flex flex-col items-center justify-center text-center">
+            <div className="text-2xl mb-3">◇</div>
+            <p className="text-sm font-medium text-gray-500">No rooms yet</p>
+            <p className="text-xs text-gray-400 mt-1">Click <span className="font-medium">+ New room</span> to create one.</p>
+          </div>
+        )}
       </main>
 
       {isModalOpen && <CreateRoomModal onClose={() => setIsModalOpen(false)} />}
