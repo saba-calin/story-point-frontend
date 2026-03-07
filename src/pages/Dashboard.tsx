@@ -16,10 +16,9 @@ const Dashboard = () => {
   const [isFetchingPrevRooms, setIsFetchingPrevRooms] = useState<boolean>(false);
   const [tokenHistory, setTokenHistory] = useState<(string | undefined)[]>([undefined]);
   const [currentPage, setCurrentPage] = useState<number>(0);
-
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const roomsPageLimit = import.meta.env.VITE_ROOMS_PAGEf_LIMIT || 3;
+  const roomsPageLimit = import.meta.env.VITE_ROOMS_PAGE_LIMIT || 6;
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -31,7 +30,7 @@ const Dashboard = () => {
       } finally {
         setIsFetchingRooms(false);
       }
-    }
+    };
 
     fetchRooms();
   }, []);
@@ -55,7 +54,7 @@ const Dashboard = () => {
     } finally {
       setIsFetchingNextRooms(false);
     }
-  }
+  };
 
   const handlePrevPage = async () => {
     setIsFetchingPrevRooms(true);
@@ -69,7 +68,7 @@ const Dashboard = () => {
     } finally {
       setIsFetchingPrevRooms(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
@@ -85,13 +84,14 @@ const Dashboard = () => {
         </div>
         <div
           onClick={() => navigate("/user-profile")}
-          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold cursor-pointer"
+          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold cursor-pointer hover:bg-gray-200 transition-colors"
         >
           {user?.username?.charAt(0).toUpperCase()}
         </div>
       </header>
 
-      <main className="flex-1 px-8 py-10 max-w-4xl mx-auto w-full">
+      <main className="flex-1 px-8 py-10 max-w-5xl mx-auto w-full">
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Your rooms</h1>
@@ -113,39 +113,41 @@ const Dashboard = () => {
             </svg>
             <span className="text-sm">Loading rooms...</span>
           </div>
-        ) : roomResponse?.rooms && roomResponse.rooms.length > 0 ? (
+        ) : (roomResponse?.rooms && roomResponse.rooms.length > 0) ? (
           <>
-            <div className="space-y-3">
-              {roomResponse.rooms.map(room => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {roomResponse!.rooms.map(room => {
                 const isOwner = user?.username === room.ownerUsername;
                 return (
                   <div
                     key={room.roomId}
                     onClick={() => navigate(`/room/${room.roomId}`)}
-                    className="bg-white rounded-xl border border-gray-200 px-5 py-4 flex items-center justify-between hover:border-gray-300 hover:shadow-sm transition-all duration-150 cursor-pointer group"
+                    className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                    <div className="p-5 flex-1">
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="w-9 h-9 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
+                          isOwner ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {isOwner ? "Owner" : "Participant"}
+                        </span>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{room.roomName}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {isOwner ? "Created by you" : `Owned by @${room.ownerUsername}`}
-                        </p>
-                        <p className="text-xs text-gray-300 mt-0.5 font-mono">{room.roomId}</p>
-                      </div>
+
+                      <h3 className="text-sm font-semibold text-gray-900 leading-snug mb-1">
+                        {room.roomName}
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        {isOwner ? "Created by you" : `Owned by @${room.ownerUsername}`}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        isOwner
-                          ? "bg-gray-900 text-white"
-                          : "bg-gray-100 text-gray-500"
-                      }`}>
-                        {isOwner ? "Owner" : "Participant"}
-                      </span>
+
+                    <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-xs font-mono text-gray-300 truncate mr-2">{room.roomId}</span>
                     </div>
                   </div>
                 );
@@ -153,7 +155,7 @@ const Dashboard = () => {
             </div>
 
             {(currentPage > 0 || roomResponse?.hasMore) && (
-              <div className="flex items-center justify-between mt-6">
+              <div className="flex items-center justify-between mt-8">
                 <button
                   onClick={handlePrevPage}
                   disabled={currentPage === 0 || isFetchingPrevRooms}
@@ -202,10 +204,6 @@ const Dashboard = () => {
           </div>
         )}
       </main>
-
-      <footer className="text-center text-xs text-gray-300 py-5 border-t border-gray-100">
-        © {new Date().getFullYear()} Story Point
-      </footer>
 
       {isModalOpen && <CreateRoomModal onClose={() => setIsModalOpen(false)} />}
     </div>
