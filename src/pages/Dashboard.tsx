@@ -1,5 +1,6 @@
 import {useContext, useEffect, useState} from "react";
 import CreateRoomModal from "../components/modal/CreateRoomModal.tsx";
+import ExploreRoomModal from "../components/modal/ExploreRoomModal.tsx";
 import {AuthContext} from "../context/AuthContext.tsx";
 import {useNavigate} from "react-router-dom";
 import type {RoomResponse} from "../util/types.ts";
@@ -17,6 +18,7 @@ const Dashboard = () => {
   const [tokenHistory, setTokenHistory] = useState<(string | undefined)[]>([undefined]);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [exploreRoom, setExploreRoom] = useState<{roomId: string, roomName: string} | null>(null);
 
   const getRoomsPageLimit = (): number => {
     const width = window.innerWidth;
@@ -136,7 +138,7 @@ const Dashboard = () => {
                 return (
                   <div
                     key={room.roomId}
-                    onClick={() => navigate(`/room/${room.roomId}`)}
+                    onClick={() => setExploreRoom({roomId: room.roomId, roomName: room.roomName})}
                     className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col"
                   >
                     <div className="p-5 flex-1">
@@ -221,6 +223,14 @@ const Dashboard = () => {
       </main>
 
       {isModalOpen && <CreateRoomModal onClose={() => setIsModalOpen(false)} />}
+
+      {exploreRoom && (
+        <ExploreRoomModal
+          roomId={exploreRoom.roomId}
+          roomName={exploreRoom.roomName}
+          onClose={() => setExploreRoom(null)}
+        />
+      )}
     </div>
   );
 };
