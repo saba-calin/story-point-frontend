@@ -2,7 +2,7 @@ import {useContext, useEffect, useState} from "react";
 import CreateRoomModal from "../components/modal/CreateRoomModal.tsx";
 import {AuthContext} from "../context/AuthContext.tsx";
 import {useNavigate} from "react-router-dom";
-import type {Rooms} from "../util/types.ts";
+import type {RoomResponse} from "../util/types.ts";
 import roomApi from "../api/roomApi.ts";
 
 const Dashboard = () => {
@@ -10,17 +10,22 @@ const Dashboard = () => {
   const {user} = useContext(AuthContext)!;
   const navigate = useNavigate();
 
-  const [rooms, setRooms] = useState<Rooms[] | null>(null);
+  const [roomResponse, setRoomResponse] = useState<RoomResponse | null>(null);
   const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(true);
+  const [isFetchingNextRooms, setIsFetchingNextRooms] = useState<boolean>(false);
+  const [isFetchingPrevRooms, setIsFetchingPrevRooms] = useState<boolean>(false);
+  const [tokenHistory, setTokenHistory] = useState<(string | undefined)[]>([undefined]);
+  const [currentPage, setCurrentPage] = useState<number>(0);
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const roomsPageLimit = import.meta.env.VITE_ROOMS_PAGEf_LIMIT || 3;
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await roomApi.getRooms();
-        console.log(response.data);
-        setRooms(response.data);
+        const response = await roomApi.getRooms(roomsPageLimit);
+        setRoomResponse(response.data);
       } catch (error: any) {
         console.log(error);
       } finally {
@@ -30,6 +35,41 @@ const Dashboard = () => {
 
     fetchRooms();
   }, []);
+
+  const handleNextPage = async () => {
+    setIsFetchingNextRooms(true);
+    try {
+      const response = await roomApi.getRooms(roomsPageLimit, roomResponse?.nextToken);
+      const data = response.data as RoomResponse;
+
+      if (data.rooms.length === 0) {
+        setRoomResponse(prev => prev ? ({...prev, hasMore: false}) : null);
+        return;
+      }
+
+      setRoomResponse(data);
+      setTokenHistory(prev => [...prev.slice(0, currentPage + 1), data.nextToken]);
+      setCurrentPage(p => p + 1);
+    } catch (error: any) {
+      console.error(error);
+    } finally {
+      setIsFetchingNextRooms(false);
+    }
+  }
+
+  const handlePrevPage = async () => {
+    setIsFetchingPrevRooms(true);
+    try {
+      const prevToken = tokenHistory[currentPage - 1];
+      const response = await roomApi.getRooms(roomsPageLimit, prevToken);
+      setRoomResponse(response.data);
+      setCurrentPage(p => p - 1);
+    } catch (error: any) {
+      console.error(error);
+    } finally {
+      setIsFetchingPrevRooms(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
@@ -66,11 +106,39 @@ const Dashboard = () => {
             Fetching Rooms
           </div>
         ) : (
-          <div className="border border-dashed border-gray-200 rounded-xl py-16 flex flex-col items-center justify-center text-center">
-            <div className="text-2xl mb-3">◇</div>
-            <p className="text-sm font-medium text-gray-500">No rooms yet</p>
-            <p className="text-xs text-gray-400 mt-1">Click <span className="font-medium">+ New room</span> to create one.</p>
-          </div>
+          roomResponse?.rooms ? (
+            <>
+              {roomResponse?.rooms.map(room => (
+                <div key={room.roomId}>
+                  {user?.username === room.ownerUsername ? "Owner" : "Participant"}
+                  {room.ownerUsername}
+                  {room.roomName}
+                  {room.roomId}
+                  {room.joinedAt}
+                </div>
+              ))}
+
+              <div>
+                {currentPage > 0 && (
+                  <button onClick={handlePrevPage} disabled={isFetchingPrevRooms}>
+                    {isFetchingPrevRooms ? "Loading..." : "Previous"}
+                  </button>
+                )}
+                {currentPage}
+                {roomResponse?.hasMore && (
+                  <button onClick={handleNextPage} disabled={isFetchingNextRooms}>
+                    {isFetchingNextRooms ? "Loading..." : "Next"}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="border border-dashed border-gray-200 rounded-xl py-16 flex flex-col items-center justify-center text-center">
+              <div className="text-2xl mb-3">◇</div>
+              <p className="text-sm font-medium text-gray-500">No rooms yet</p>
+              <p className="text-xs text-gray-400 mt-1">Click <span className="font-medium">+ New room</span> to create one.</p>
+            </div>
+          )
         )}
       </main>
 

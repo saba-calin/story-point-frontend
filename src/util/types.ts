@@ -85,11 +85,12 @@ export interface Player {
   username: string;
 }
 
-export interface Rooms {
+export interface Room {
   roomId: string;
   username: string;
   joinedAt: number;
-  ownerUsername: number;
+  ownerUsername: string;
+  roomName: string;
 }
 
 const RoomStatus = {
@@ -125,4 +126,10 @@ export interface AiEstimateRequest {
 
 export interface AiEstimateResponse {
   estimate: string;
+}
+
+export interface RoomResponse {
+  rooms: Room[];
+  hasMore: boolean;
+  nextToken?: string;
 }
