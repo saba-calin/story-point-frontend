@@ -18,7 +18,22 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const roomsPageLimit = import.meta.env.VITE_ROOMS_PAGE_LIMIT || 6;
+  const getRoomsPageLimit = (): number => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const cols = width >= 1024 ? 3 : width >= 640 ? 2 : 1;
+
+    const CHROME_HEIGHT = 302;
+    const CARD_HEIGHT = 165;
+    const GAP = 16;
+
+    const availableHeight = height - CHROME_HEIGHT;
+    const rows = Math.max(1, Math.floor((availableHeight + GAP) / (CARD_HEIGHT + GAP)));
+
+    return rows * cols;
+  };
+  const [roomsPageLimit] = useState(() => getRoomsPageLimit());
 
   useEffect(() => {
     const fetchRooms = async () => {
