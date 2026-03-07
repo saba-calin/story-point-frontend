@@ -15,7 +15,7 @@ const ExploreRoomModal = ({roomId, roomName, onClose}: IOwnProps) => {
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [expandedStoryId, setExpandedStoryId] = useState<string | null>(null);
   const [votes, setVotes] = useState<Record<string, Vote[]>>({});
-  const [isFetchingVotes, setIsFetchingVotes] = useState<string | null>(null);
+  const [fetchingVotesFor, setFetchingVotesFor] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -44,7 +44,7 @@ const ExploreRoomModal = ({roomId, roomName, onClose}: IOwnProps) => {
       return;
     }
 
-    setIsFetchingVotes(storyId);
+    setFetchingVotesFor(storyId);
     try {
       const response = await storyApi.getVotesByStoryId(storyId);
       setVotes(prev => ({
@@ -54,7 +54,7 @@ const ExploreRoomModal = ({roomId, roomName, onClose}: IOwnProps) => {
     } catch (error: any) {
       console.error(error);
     } finally {
-      setIsFetchingVotes(null);
+      setFetchingVotesFor(null);
     }
   };
 
@@ -102,7 +102,7 @@ const ExploreRoomModal = ({roomId, roomName, onClose}: IOwnProps) => {
               {stories.map(story => {
                 const isExpanded = expandedStoryId === story.storyId;
                 const storyVotes = votes[story.storyId] ?? [];
-                const isLoadingVotes = isFetchingVotes === story.storyId;
+                const isLoadingVotes = fetchingVotesFor === story.storyId;
 
                 return (
                   <div key={story.storyId}>
@@ -158,9 +158,6 @@ const ExploreRoomModal = ({roomId, roomName, onClose}: IOwnProps) => {
                                 key={vote.username}
                                 className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5"
                               >
-                                <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
-                                  {vote.username.charAt(0).toUpperCase()}
-                                </div>
                                 <span className="text-xs text-gray-600">{vote.username}</span>
                                 <span className="text-xs font-semibold text-gray-900 ml-1">
                                   {vote.voteValue ?? "—"}
