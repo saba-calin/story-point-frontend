@@ -13,6 +13,7 @@ const UserProfile = () => {
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
   const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
+  const [isImageError, setIsImageError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const {user, setUser} = useContext(AuthContext)!;
@@ -39,6 +40,7 @@ const UserProfile = () => {
       });
 
       setIsImageLoading(true);
+      setIsImageError(false);
       setUser({...user!, profilePictureKey: data.profilePictureKey});
     } catch (error: any) {
       console.error(error);
@@ -75,7 +77,7 @@ const UserProfile = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
 
-      <header className="px-8 py-5 flex items-center justify-between border-b border-gray-200 bg-white">
+      <header className="px-8 h-16 flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/dashboard")}
@@ -98,8 +100,8 @@ const UserProfile = () => {
 
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-6 py-8 border-b border-gray-100 flex items-center gap-6">
-            <div className="relative w-16 h-16 flex-shrink-0">
-              {user?.profilePictureKey ? (
+            <div className="relative w-16 h-16 shrink-0">
+              {user?.profilePictureKey && !isImageError ? (
                 <>
                   {isImageLoading && (
                     <svg
@@ -115,6 +117,7 @@ const UserProfile = () => {
                     src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
                     className={`w-full h-full rounded-full object-cover border border-gray-200 transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
                     onLoad={() => setIsImageLoading(false)}
+                    onError={() => { setIsImageLoading(false); setIsImageError(true); }}
                   />
                 </>
               ) : (

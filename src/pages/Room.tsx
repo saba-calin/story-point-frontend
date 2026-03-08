@@ -35,6 +35,7 @@ const Room = () => {
   const [isSetActiveStoryLoading, setIsSetActiveStoryLoading] = useState<boolean>(false);
   const [isAiEstimateLoading, setIsAiEstimateLoading] = useState<boolean>(false);
   const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
+  const [isImageError, setIsImageError] = useState<boolean>(false);
 
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
   const [setActiveStoryModalData, setSetActiveStoryModalData] = useState<{
@@ -304,7 +305,7 @@ const Room = () => {
             onClick={() => navigate("/user-profile")}
             className="relative w-10 h-10 shrink-0 cursor-pointer"
           >
-            {user?.profilePictureKey ? (
+            {user?.profilePictureKey && !isImageError ? (
               <>
                 {isImageLoading && (
                   <svg
@@ -320,6 +321,7 @@ const Room = () => {
                   src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
                   className={`w-full h-full rounded-full object-cover border border-gray-200 hover:opacity-80 transition-all duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
                   onLoad={() => setIsImageLoading(false)}
+                  onError={() => { setIsImageLoading(false); setIsImageError(true); }}
                 />
               </>
             ) : (

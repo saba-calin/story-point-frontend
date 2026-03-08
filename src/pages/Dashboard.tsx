@@ -13,6 +13,7 @@ const Dashboard = () => {
 
   const [roomResponse, setRoomResponse] = useState<RoomResponse | null>(null);
   const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
+  const [isImageError, setIsImageError] = useState<boolean>(false);
   const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(true);
   const [isFetchingNextRooms, setIsFetchingNextRooms] = useState<boolean>(false);
   const [isFetchingPrevRooms, setIsFetchingPrevRooms] = useState<boolean>(false);
@@ -104,7 +105,7 @@ const Dashboard = () => {
           onClick={() => navigate("/user-profile")}
           className="relative w-10 h-10 shrink-0 cursor-pointer"
         >
-          {user?.profilePictureKey ? (
+          {user?.profilePictureKey && !isImageError ? (
             <>
               {isImageLoading && (
                 <svg
@@ -120,6 +121,7 @@ const Dashboard = () => {
                 src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
                 className={`w-full h-full rounded-full object-cover border border-gray-200 hover:opacity-80 transition-all duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
                 onLoad={() => setIsImageLoading(false)}
+                onError={() => { setIsImageLoading(false); setIsImageError(true); }}
               />
             </>
           ) : (
