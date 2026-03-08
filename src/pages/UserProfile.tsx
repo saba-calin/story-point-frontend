@@ -116,10 +116,6 @@ const UserProfile = () => {
           </div>
         </div>
       </main>
-
-      <footer className="text-center text-xs text-gray-300 py-5 border-t border-gray-100">
-        © {new Date().getFullYear()} Story Point
-      </footer>
     </div>
   );
 }
