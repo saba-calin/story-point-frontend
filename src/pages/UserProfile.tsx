@@ -1,11 +1,46 @@
 import {useNavigate} from "react-router-dom";
-import {useContext} from "react";
+import {type ChangeEvent, useContext, useRef, useState} from "react";
 import {AuthContext} from "../context/AuthContext.tsx";
+import userApi from "../api/userApi.ts";
+import type {AvatarUploadUrlResponse} from "../util/types.ts";
+import axios from "axios";
 
 const UserProfile = () => {
 
   const navigate = useNavigate();
-  const {user} = useContext(AuthContext)!;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+
+  const {user, setUser} = useContext(AuthContext)!;
+
+  const handleUploadProfilePicture = async (event: ChangeEvent<HTMLInputElement>) => {
+    try {
+      const image = event.target.files?.[0];
+      if (!image) {
+        return;
+      }
+
+      setIsUploadingImage(true);
+      const response = await userApi.getAvatarUploadUrl(image.type, image.size);
+      const data = response.data as AvatarUploadUrlResponse;
+      console.log(data);
+
+      await axios.put(data.uploadUrl, image, {
+        headers: {
+          'Content-Type': image.type
+        }
+      });
+
+      setUser({...user!, profilePictureKey: data.profilePictureKey});
+
+    } catch (error: any) {
+      console.error(error);
+
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
@@ -33,8 +68,27 @@ const UserProfile = () => {
 
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-6 py-8 border-b border-gray-100 flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-semibold text-gray-600">
-              {user?.username?.charAt(0).toUpperCase()}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/webp"
+              className="hidden"
+              onChange={handleUploadProfilePicture}
+            />
+
+            <div
+              className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-semibold text-gray-600"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {user?.profilePictureKey ? (
+                  <img
+                    src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  user?.username?.charAt(0).toUpperCase()
+                )
+              }
             </div>
             <div>
               <p className="text-base font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>

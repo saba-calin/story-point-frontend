@@ -16,6 +16,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  profilePictureKey: string;
 }
 
 export interface AuthContextType {
@@ -132,4 +133,9 @@ export interface RoomResponse {
   rooms: Room[];
   hasMore: boolean;
   nextToken?: string;
+}
+
+export interface AvatarUploadUrlResponse {
+  uploadUrl: string;
+  profilePictureKey: string;
 }
