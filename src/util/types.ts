@@ -112,6 +112,12 @@ export interface CreateRoomRequest {
 
 export const VALID_VOTES = ["1", "2", "3", "5", "8", "13", "21", "?"];
 
+export const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/jpg": ".jpg",
+  "image/jpeg": ".jpeg",
+  "image/png": ".png"
+};
+
 export interface CreateRoomResponse {
   roomId: string,
   name: string,
