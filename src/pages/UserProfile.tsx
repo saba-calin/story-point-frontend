@@ -97,10 +97,7 @@ const UserProfile = () => {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-
           <div className="px-6 py-8 border-b border-gray-100 flex items-center gap-6">
-
-            {/* Avatar with spinning ring while loading */}
             <div className="relative w-16 h-16 flex-shrink-0">
               {user?.profilePictureKey ? (
                 <>

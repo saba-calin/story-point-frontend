@@ -12,6 +12,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const [roomResponse, setRoomResponse] = useState<RoomResponse | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
   const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(true);
   const [isFetchingNextRooms, setIsFetchingNextRooms] = useState<boolean>(false);
   const [isFetchingPrevRooms, setIsFetchingPrevRooms] = useState<boolean>(false);
@@ -90,7 +91,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
 
-      <header className="px-8 py-5 flex items-center justify-between border-b border-gray-200 bg-white">
+      <header className="px-8 h-16 flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-gray-900 rounded flex items-center justify-center">
             <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -101,9 +102,31 @@ const Dashboard = () => {
         </div>
         <div
           onClick={() => navigate("/user-profile")}
-          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold cursor-pointer hover:bg-gray-200 transition-colors"
+          className="relative w-10 h-10 shrink-0 cursor-pointer"
         >
-          {user?.username?.charAt(0).toUpperCase()}
+          {user?.profilePictureKey ? (
+            <>
+              {isImageLoading && (
+                <svg
+                  className="absolute inset-0 w-full h-full animate-spin"
+                  viewBox="0 0 64 64"
+                  fill="none"
+                >
+                  <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
+                  <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              )}
+              <img
+                src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
+                className={`w-full h-full rounded-full object-cover border border-gray-200 hover:opacity-80 transition-all duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
+                onLoad={() => setIsImageLoading(false)}
+              />
+            </>
+          ) : (
+            <div className="w-full h-full rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold hover:bg-gray-200 transition-colors">
+              {user?.username?.charAt(0).toUpperCase()}
+            </div>
+          )}
         </div>
       </header>
 

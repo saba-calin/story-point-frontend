@@ -34,6 +34,7 @@ const Room = () => {
   const [isCreateStoryLoading, setIsCreateStoryLoading] = useState<boolean>(false);
   const [isSetActiveStoryLoading, setIsSetActiveStoryLoading] = useState<boolean>(false);
   const [isAiEstimateLoading, setIsAiEstimateLoading] = useState<boolean>(false);
+  const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
 
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
   const [setActiveStoryModalData, setSetActiveStoryModalData] = useState<{
@@ -230,7 +231,7 @@ const Room = () => {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
           </svg>
-          <span className="text-sm">Loading room...</span>
+          <span className="text-sm">Joining room...</span>
         </div>
       </div>
     );
@@ -238,7 +239,7 @@ const Room = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
-      <header className="px-8 py-5 flex items-center justify-between border-b border-gray-200 bg-white">
+      <header className="px-8 h-16 flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoBack}
@@ -299,9 +300,33 @@ const Room = () => {
               + New story
             </button>
           )}
-          <div onClick={() => navigate("/user-profile")}
-            className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold cursor-pointer">
-            {user?.username?.charAt(0).toUpperCase()}
+          <div
+            onClick={() => navigate("/user-profile")}
+            className="relative w-10 h-10 shrink-0 cursor-pointer"
+          >
+            {user?.profilePictureKey ? (
+              <>
+                {isImageLoading && (
+                  <svg
+                    className="absolute inset-0 w-full h-full animate-spin"
+                    viewBox="0 0 64 64"
+                    fill="none"
+                  >
+                    <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
+                    <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
+                  </svg>
+                )}
+                <img
+                  src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
+                  className={`w-full h-full rounded-full object-cover border border-gray-200 hover:opacity-80 transition-all duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
+                  onLoad={() => setIsImageLoading(false)}
+                />
+              </>
+            ) : (
+              <div className="w-full h-full rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold hover:bg-gray-200 transition-colors">
+                {user?.username?.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
         </div>
       </header>
