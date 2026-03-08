@@ -163,7 +163,7 @@ const Dashboard = () => {
                       </p>
                     </div>
 
-                    <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+                    <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-center">
                       <span className="text-xs font-mono text-gray-300 truncate mr-2">{room.roomId}</span>
                     </div>
                   </div>
