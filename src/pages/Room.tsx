@@ -2,6 +2,7 @@ import {useNavigate, useParams} from "react-router-dom";
 import {useContext, useEffect, useRef, useState} from "react";
 import {
   type AiEstimateResponse,
+  type Player,
   type PlayerJoinedEvent, type PlayerLeftEvent, type PlayerVotedEvent,
   type RoomJoinedEvent,
   type Story,
@@ -18,7 +19,7 @@ const Room = () => {
   const {roomId} = useParams();
   const navigate = useNavigate();
 
-  const [players, setPlayers] = useState<string[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [roomOwner, setRoomOwner] = useState<string | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
@@ -36,6 +37,8 @@ const Room = () => {
   const [isAiEstimateLoading, setIsAiEstimateLoading] = useState<boolean>(false);
   const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
   const [isImageError, setIsImageError] = useState<boolean>(false);
+  const [imageLoadingMap, setImageLoadingMap] = useState<Map<string, boolean>>(new Map());
+  const [imageErrorMap, setImageErrorMap] = useState<Map<string, boolean>>(new Map());
 
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
   const [setActiveStoryModalData, setSetActiveStoryModalData] = useState<{
@@ -87,7 +90,7 @@ const Room = () => {
       } else if (eventData.action === "playerJoined") {
         const playerJoinedEvent = eventData as PlayerJoinedEvent;
 
-        setPlayers(prevPlayers => [...prevPlayers, playerJoinedEvent.player.username]);
+        setPlayers(prevPlayers => [...prevPlayers, playerJoinedEvent.player]);
       } else if (eventData.action === "storyCreated") {
         const storyCreatedEvent = eventData as StoryCreatedEvent;
         setStories(stories => [...stories, storyCreatedEvent.story]);
@@ -144,7 +147,17 @@ const Room = () => {
       } else if (eventData.action == "playerLeft") {
         const playerLeftEvent = eventData as PlayerLeftEvent;
 
-        setPlayers(prevPlayers => prevPlayers.filter(prevPlayer => prevPlayer !== playerLeftEvent.player));
+        setPlayers(prevPlayers => prevPlayers.filter(p => p.username !== playerLeftEvent.player));
+        setImageLoadingMap(prev => {
+          const next = new Map(prev);
+          next.delete(playerLeftEvent.player);
+          return next;
+        });
+        setImageErrorMap(prev => {
+          const next = new Map(prev);
+          next.delete(playerLeftEvent.player);
+          return next;
+        });
       }
     }
 
@@ -309,11 +322,7 @@ const Room = () => {
             {user?.profilePictureKey && !isImageError ? (
               <>
                 {isImageLoading && (
-                  <svg
-                    className="absolute inset-0 w-full h-full animate-spin"
-                    viewBox="0 0 64 64"
-                    fill="none"
-                  >
+                  <svg className="absolute inset-0 w-full h-full animate-spin" viewBox="0 0 64 64" fill="none">
                     <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
                     <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
                   </svg>
@@ -367,14 +376,12 @@ const Room = () => {
                             {isActive && (
                               <div className="w-1.5 h-1.5 rounded-full bg-gray-900 flex-shrink-0"></div>
                             )}
-                            <span
-                              className={`text-sm truncate ${isActive ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+                            <span className={`text-sm truncate ${isActive ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
                               {story.name}
                             </span>
                           </div>
                           {story.storyEstimation && (
-                            <span
-                              className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0">
+                            <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0">
                               {story.storyEstimation}
                             </span>
                           )}
@@ -474,28 +481,47 @@ const Room = () => {
               <div className="p-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {players.map(player => {
-                    const voteValue = votes.get(player);
-                    const hasVoted = votes.has(player);
-                    const isOwner = player === roomOwner;
+                    const voteValue = votes.get(player.username);
+                    const hasVoted = votes.has(player.username);
+                    const isOwner = player.username === roomOwner;
 
                     return (
                       <div
-                        key={player}
+                        key={player.username}
                         className="bg-gray-50 rounded-lg p-3 border border-gray-100"
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <div
-                            className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs text-gray-600 font-semibold">
-                            {player.charAt(0).toUpperCase()}
+                          <div className="relative w-8 h-8 flex-shrink-0">
+                            {player.profilePictureKey && !imageErrorMap.get(player.username) ? (
+                              <>
+                                {imageLoadingMap.get(player.username) !== false && (
+                                  <svg className="absolute inset-0 w-full h-full animate-spin" viewBox="0 0 64 64" fill="none">
+                                    <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
+                                    <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
+                                  </svg>
+                                )}
+                                <img
+                                  src={`${import.meta.env.VITE_CDN_BASE_URL}/${player.profilePictureKey}`}
+                                  className={`w-full h-full rounded-full object-cover border border-gray-200 transition-opacity duration-300 ${imageLoadingMap.get(player.username) !== false ? 'opacity-0' : 'opacity-100'}`}
+                                  onLoad={() => setImageLoadingMap(prev => new Map(prev).set(player.username, false))}
+                                  onError={() => {
+                                    setImageLoadingMap(prev => new Map(prev).set(player.username, false));
+                                    setImageErrorMap(prev => new Map(prev).set(player.username, true));
+                                  }}
+                                />
+                              </>
+                            ) : (
+                              <div className="w-full h-full rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs text-gray-600 font-semibold">
+                                {player.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                           </div>
                           <span className="text-sm font-medium text-gray-900 truncate flex-1">
-                            {player}
+                            {player.username}
                           </span>
                           {isOwner && (
                             <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd"
-                                    d="M9.504 1.132a1 1 0 01.992 0l1.75 1a1 1 0 11-.992 1.736L10 3.152l-1.254.716a1 1 0 11-.992-1.736l1.75-1zM5.618 4.504a1 1 0 01-.372 1.364L5.016 6l.23.132a1 1 0 11-.992 1.736L4 7.723V8a1 1 0 01-2 0V6a.996.996 0 01.52-.878l1.734-.99a1 1 0 011.364.372zm8.764 0a1 1 0 011.364-.372l1.733.99A1.002 1.002 0 0118 6v2a1 1 0 11-2 0v-.277l-.254.145a1 1 0 11-.992-1.736l.23-.132-.23-.132a1 1 0 01-.372-1.364zm-7 4a1 1 0 011.364-.372L10 8.848l1.254-.716a1 1 0 11.992 1.736L11 10.58V12a1 1 0 11-2 0v-1.42l-1.246-.712a1 1 0 01-.372-1.364zM3 11a1 1 0 011 1v1.42l1.246.712a1 1 0 11-.992 1.736l-1.75-1A1 1 0 012 14v-2a1 1 0 011-1zm14 0a1 1 0 011 1v2a1 1 0 01-.504.868l-1.75 1a1 1 0 11-.992-1.736L16 13.42V12a1 1 0 011-1zm-9.618 5.504a1 1 0 011.364-.372l.254.145V16a1 1 0 112 0v.277l.254-.145a1 1 0 11.992 1.736l-1.735.992a.995.995 0 01-.506.135h-.008a.995.995 0 01-.506-.135l-1.734-.992a1 1 0 01-.372-1.364z"
-                                    clipRule="evenodd"/>
+                              <path fillRule="evenodd" d="M9.504 1.132a1 1 0 01.992 0l1.75 1a1 1 0 11-.992 1.736L10 3.152l-1.254.716a1 1 0 11-.992-1.736l1.75-1zM5.618 4.504a1 1 0 01-.372 1.364L5.016 6l.23.132a1 1 0 11-.992 1.736L4 7.723V8a1 1 0 01-2 0V6a.996.996 0 01.52-.878l1.734-.99a1 1 0 011.364.372zm8.764 0a1 1 0 011.364-.372l1.733.99A1.002 1.002 0 0118 6v2a1 1 0 11-2 0v-.277l-.254.145a1 1 0 11-.992-1.736l.23-.132-.23-.132a1 1 0 01-.372-1.364zm-7 4a1 1 0 011.364-.372L10 8.848l1.254-.716a1 1 0 11.992 1.736L11 10.58V12a1 1 0 11-2 0v-1.42l-1.246-.712a1 1 0 01-.372-1.364zM3 11a1 1 0 011 1v1.42l1.246.712a1 1 0 11-.992 1.736l-1.75-1A1 1 0 012 14v-2a1 1 0 011-1zm14 0a1 1 0 011 1v2a1 1 0 01-.504.868l-1.75 1a1 1 0 11-.992-1.736L16 13.42V12a1 1 0 011-1zm-9.618 5.504a1 1 0 011.364-.372l.254.145V16a1 1 0 112 0v.277l.254-.145a1 1 0 11.992 1.736l-1.735.992a.995.995 0 01-.506.135h-.008a.995.995 0 01-.506-.135l-1.734-.992a1 1 0 01-.372-1.364z" clipRule="evenodd"/>
                             </svg>
                           )}
                         </div>

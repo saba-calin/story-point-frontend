@@ -34,11 +34,16 @@ export interface Story {
   storyEstimation: string;
 }
 
+export interface Player {
+  username: string;
+  profilePictureKey: string;
+}
+
 export interface RoomJoinedEvent {
-  players: string[],
-  room: CreateRoomResponse,
-  stories: Story[],
-  votes: Vote[]
+  players: Player[];
+  room: CreateRoomResponse;
+  stories: Story[];
+  votes: Vote[];
 }
 
 export interface PlayerJoinedEvent {

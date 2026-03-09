@@ -52,7 +52,9 @@ const UserProfile = () => {
 
   const handleUploadProfilePicture = async (event: ChangeEvent<HTMLInputElement>) => {
     const image = event.target.files?.[0];
-    if (!image) return;
+    if (!image) {
+      return;
+    }
     await uploadImage(image);
   };
 
@@ -70,7 +72,9 @@ const UserProfile = () => {
     setIsDraggingOver(false);
 
     const image = e.dataTransfer.files?.[0];
-    if (!image) return;
+    if (!image) {
+      return;
+    }
     await uploadImage(image);
   };
 
@@ -80,7 +84,7 @@ const UserProfile = () => {
       <header className="px-8 h-16 flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard")}
             className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
