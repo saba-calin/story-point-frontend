@@ -58,7 +58,8 @@ const Room = () => {
 
       ws.send(JSON.stringify({
         action: "join-room",
-        roomId: roomId
+        roomId: roomId,
+        profilePictureKey: user?.profilePictureKey || null
       }));
     };
 

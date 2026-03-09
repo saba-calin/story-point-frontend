@@ -5,6 +5,7 @@ import {AuthContext} from "../context/AuthContext.tsx";
 import {useNavigate} from "react-router-dom";
 import type {RoomResponse} from "../util/types.ts";
 import roomApi from "../api/roomApi.ts";
+import authApi from "../api/authApi.ts";
 
 const Dashboard = () => {
 
@@ -21,6 +22,8 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [exploreRoom, setExploreRoom] = useState<{roomId: string, roomName: string} | null>(null);
+
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   const getRoomsPageLimit = (): number => {
     const width = window.innerWidth;
@@ -89,6 +92,16 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogOut = async () => {
+    try {
+      setIsLoggingOut(true);
+      await authApi.logOut();
+    } finally {
+      setIsLoggingOut(false);
+      navigate("/");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
 
@@ -101,34 +114,49 @@ const Dashboard = () => {
           </div>
           <span className="text-sm font-semibold tracking-tight text-gray-800">Story Point</span>
         </div>
-        <div
-          onClick={() => navigate("/user-profile")}
-          className="relative w-10 h-10 shrink-0 cursor-pointer"
-        >
-          {user?.profilePictureKey && !isImageError ? (
-            <>
-              {isImageLoading && (
-                <svg
-                  className="absolute inset-0 w-full h-full animate-spin"
-                  viewBox="0 0 64 64"
-                  fill="none"
-                >
-                  <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
-                  <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleLogOut}
+            disabled={isLoggingOut}
+            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {isLoggingOut ? (
+              <>
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
-              )}
-              <img
-                src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
-                className={`w-full h-full rounded-full object-cover border border-gray-200 hover:opacity-80 transition-all duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
-                onLoad={() => setIsImageLoading(false)}
-                onError={() => { setIsImageLoading(false); setIsImageError(true); }}
-              />
-            </>
-          ) : (
-            <div className="w-full h-full rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold hover:bg-gray-200 transition-colors">
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
-          )}
+                Logging out...
+              </>
+            ) : (
+              "Logout"
+            )}
+          </button>
+          <div
+            onClick={() => navigate("/user-profile")}
+            className="relative w-10 h-10 shrink-0 cursor-pointer"
+          >
+            {user?.profilePictureKey && !isImageError ? (
+              <>
+                {isImageLoading && (
+                  <svg className="absolute inset-0 w-full h-full animate-spin" viewBox="0 0 64 64" fill="none">
+                    <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
+                    <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
+                  </svg>
+                )}
+                <img
+                  src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
+                  className={`w-full h-full rounded-full object-cover border border-gray-200 hover:opacity-80 transition-all duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
+                  onLoad={() => setIsImageLoading(false)}
+                  onError={() => { setIsImageLoading(false); setIsImageError(true); }}
+                />
+              </>
+            ) : (
+              <div className="w-full h-full rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500 font-semibold hover:bg-gray-200 transition-colors">
+                {user?.username?.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
