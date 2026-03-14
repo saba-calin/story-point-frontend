@@ -40,6 +40,12 @@ export interface Player {
   profilePictureKey: string;
 }
 
+export interface JiraStory {
+  key: string;
+  name: string;
+  description: string;
+}
+
 export interface RoomJoinedEvent {
   players: Player[];
   room: CreateRoomResponse;

@@ -168,12 +168,13 @@ const Room = () => {
     return () => ws.close();
   }, []);
 
-  const handleCreateStory = (name: string, description: string) => {
+  const handleCreateStory = (name: string, description: string, issueKey?: string) => {
     wsRef.current?.send(JSON.stringify({
       action: "create-story",
       roomId: roomId,
       name: name,
-      description: description
+      description: description,
+      ...(issueKey && {issueKey})
     }));
     setIsCreateStoryLoading(true);
   }
