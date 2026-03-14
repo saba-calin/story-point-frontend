@@ -3,7 +3,7 @@ import axiosInstance from "./axiosInstance.ts";
 
 const storyApi = {
   aiEstimate: (data: AiEstimateRequest) => axiosInstance.post("/story/ai-estimate", data),
-  getVotesByStoryId: (storyId: string) => axiosInstance.get(`/stories/${storyId}/votes`)
+  getVotes: (roomId: string, storyId: string) => axiosInstance.get(`rooms/${roomId}/stories/${storyId}/votes`)
 }
 
 export default storyApi;

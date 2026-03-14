@@ -46,11 +46,12 @@ const ExploreRoomModal = ({roomId, roomName, onClose}: IOwnProps) => {
 
     setFetchingVotesFor(storyId);
     try {
-      const response = await storyApi.getVotesByStoryId(storyId);
+      const response = await storyApi.getVotes(roomId, storyId);
       setVotes(prev => ({
         ...prev,
         [storyId]: response.data.votes
       }));
+
     } catch (error: any) {
       console.error(error);
     } finally {
