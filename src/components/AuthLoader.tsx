@@ -19,7 +19,6 @@ const AuthLoader = () => {
         <span className="text-gray-900 text-xl leading-none select-none animate-bounce" style={{ animationDelay: "300ms" }}>◆</span>
       </div>
 
-      {/* Label */}
       <p className="text-xs text-gray-400 tracking-wide">Loading…</p>
     </div>
   );

@@ -17,6 +17,7 @@ export interface User {
   firstName: string;
   lastName: string;
   profilePictureKey: string;
+  hasJiraAccess: boolean;
 }
 
 export interface AuthContextType {
@@ -89,6 +90,12 @@ export interface Vote {
 
 export interface Player {
   username: string;
+}
+
+export interface SaveTokenRequest {
+  jiraBaseUrl: string;
+  jiraEmail: string;
+  jiraToken: string;
 }
 
 export interface Room {

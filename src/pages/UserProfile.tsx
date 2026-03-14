@@ -4,6 +4,7 @@ import {AuthContext} from "../context/AuthContext.tsx";
 import userApi from "../api/userApi.ts";
 import {ALLOWED_IMAGE_TYPES, type AvatarUploadUrlResponse} from "../util/types.ts";
 import axios from "axios";
+import JiraConfigModal from "../components/modal/JiraConfigModal.tsx";
 
 const UserProfile = () => {
 
@@ -15,6 +16,9 @@ const UserProfile = () => {
   const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
   const [isImageError, setIsImageError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  const [isSavingToken, setIsSavingToken] = useState<boolean>(false);
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState<boolean>(false);
 
   const {user, setUser} = useContext(AuthContext)!;
 
@@ -78,140 +82,186 @@ const UserProfile = () => {
     await uploadImage(image);
   };
 
+  const handleSaveJiraConfig = async (jiraBaseUrl: string, jiraEmail: string, jiraToken: string) => {
+    try {
+      setIsSavingToken(true);
+
+      await userApi.saveJiraToken({jiraBaseUrl, jiraEmail, jiraToken});
+
+      setUser({...user!, hasJiraAccess: true});
+      setIsJiraModalOpen(false);
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSavingToken(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
+    <>
+      <div className="min-h-screen bg-gray-50 flex flex-col" style={{fontFamily: "'DM Sans', sans-serif"}}>
 
-      <header className="px-8 h-16 flex items-center justify-between border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard")}
-            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-          </button>
-          <span className="text-sm font-semibold tracking-tight text-gray-800">Profile</span>
-        </div>
-        <div className="w-8 h-8" />
-      </header>
+        <header className="px-8 h-16 flex items-center justify-between border-b border-gray-200 bg-white">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard")}
+              className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              </svg>
+            </button>
+            <span className="text-sm font-semibold tracking-tight text-gray-800">Profile</span>
+          </div>
+          <div className="w-8 h-8" />
+        </header>
 
-      <main className="flex-1 px-8 py-10 max-w-2xl mx-auto w-full">
-        <div className="mb-8">
-          <h1 className="text-xl font-semibold text-gray-900">Profile</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Your account details.</p>
-        </div>
+        <main className="flex-1 px-8 py-10 max-w-2xl mx-auto w-full">
+          <div className="mb-8">
+            <h1 className="text-xl font-semibold text-gray-900">Profile</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Your account details.</p>
+          </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-8 border-b border-gray-100 flex items-center gap-6">
-            <div className="relative w-16 h-16 shrink-0">
-              {user?.profilePictureKey && !isImageError ? (
-                <>
-                  {isImageLoading && (
-                    <svg
-                      className="absolute inset-0 w-full h-full animate-spin"
-                      viewBox="0 0 64 64"
-                      fill="none"
-                    >
-                      <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
-                      <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
-                    </svg>
-                  )}
-                  <img
-                    src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
-                    className={`w-full h-full rounded-full object-cover border border-gray-200 transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
-                    onLoad={() => setIsImageLoading(false)}
-                    onError={() => { setIsImageLoading(false); setIsImageError(true); }}
-                  />
-                </>
-              ) : (
-                <div className="w-full h-full rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-semibold text-gray-600">
-                  {user?.username?.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            <div className="flex-shrink-0">
-              <p className="text-base font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
-              <p className="text-sm text-gray-400 mt-0.5">@{user?.username}</p>
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png, image/jpeg, image/webp"
-              className="hidden"
-              onChange={handleUploadProfilePicture}
-            />
-
-            <div className="flex-1 flex flex-col gap-2">
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => !isUploadingImage && fileInputRef.current?.click()}
-                className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 transition-all
-                  ${isUploadingImage
-                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                  : isDraggingOver
-                    ? 'border-gray-600 bg-gray-50 cursor-copy'
-                    : errorMessage
-                      ? 'border-red-200 bg-red-50 hover:border-red-400 hover:bg-red-100 cursor-pointer'
-                      : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50 cursor-pointer'
-                }`}
-              >
-                {isUploadingImage ? (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-8 border-b border-gray-100 flex items-center gap-6">
+              <div className="relative w-16 h-16 shrink-0">
+                {user?.profilePictureKey && !isImageError ? (
                   <>
-                    <svg className="animate-spin w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                    </svg>
-                    <p className="text-xs text-gray-400">Uploading...</p>
-                  </>
-                ) : errorMessage ? (
-                  <>
-                    <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-                    </svg>
-                    <p className="text-xs font-medium text-red-500">{errorMessage}</p>
-                    <p className="text-xs text-red-300">Click to try again</p>
+                    {isImageLoading && (
+                      <svg
+                        className="absolute inset-0 w-full h-full animate-spin"
+                        viewBox="0 0 64 64"
+                        fill="none"
+                      >
+                        <circle cx="32" cy="32" r="30" stroke="#e5e7eb" strokeWidth="3"/>
+                        <path d="M 32 2 A 30 30 0 0 1 62 32" stroke="#374151" strokeWidth="3" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                    <img
+                      src={`${import.meta.env.VITE_CDN_BASE_URL}/${user.profilePictureKey}`}
+                      className={`w-full h-full rounded-full object-cover border border-gray-200 transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
+                      onLoad={() => setIsImageLoading(false)}
+                      onError={() => { setIsImageLoading(false); setIsImageError(true); }}
+                    />
                   </>
                 ) : (
-                  <>
-                    <svg className={`w-5 h-5 transition-colors ${isDraggingOver ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
-                    </svg>
-                    <p className={`text-xs font-medium transition-colors ${isDraggingOver ? 'text-gray-700' : 'text-gray-400'}`}>
-                      {isDraggingOver ? 'Drop to upload' : 'Drag & drop or click to upload'}
-                    </p>
-                    <p className="text-xs text-gray-300">PNG, JPEG or JPG (max 1MB)</p>
-                  </>
+                  <div className="w-full h-full rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-semibold text-gray-600">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </div>
                 )}
+              </div>
+
+              <div className="shrink-0">
+                <p className="text-base font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
+                <p className="text-sm text-gray-400 mt-0.5">@{user?.username}</p>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                className="hidden"
+                onChange={handleUploadProfilePicture}
+              />
+
+              <div className="flex-1 flex flex-col gap-2">
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 transition-all
+                  ${isUploadingImage
+                    ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                    : isDraggingOver
+                      ? 'border-gray-600 bg-gray-50 cursor-copy'
+                      : errorMessage
+                        ? 'border-red-200 bg-red-50 hover:border-red-400 hover:bg-red-100 cursor-pointer'
+                        : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50 cursor-pointer'
+                  }`}
+                >
+                  {isUploadingImage ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                      </svg>
+                      <p className="text-xs text-gray-400">Uploading...</p>
+                    </>
+                  ) : errorMessage ? (
+                    <>
+                      <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                      </svg>
+                      <p className="text-xs font-medium text-red-500">{errorMessage}</p>
+                      <p className="text-xs text-red-300">Click to try again</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className={`w-5 h-5 transition-colors ${isDraggingOver ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                      </svg>
+                      <p className={`text-xs font-medium transition-colors ${isDraggingOver ? 'text-gray-700' : 'text-gray-400'}`}>
+                        {isDraggingOver ? 'Drop to upload' : 'Drag & drop or click to upload'}
+                      </p>
+                      <p className="text-xs text-gray-300">PNG, JPEG or JPG (max 1MB)</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-gray-100">
+              <div className="px-6 py-4 flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">First name</span>
+                <span className="text-sm text-gray-900 font-medium">{user?.firstName}</span>
+              </div>
+              <div className="px-6 py-4 flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last name</span>
+                <span className="text-sm text-gray-900 font-medium">{user?.lastName}</span>
+              </div>
+              <div className="px-6 py-4 flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Username</span>
+                <span className="text-sm text-gray-900 font-medium">@{user?.username}</span>
+              </div>
+              <div className="px-6 py-4 flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</span>
+                <span className="text-sm text-gray-900 font-medium">{user?.email}</span>
+              </div>
+              <div className="px-6 py-4 flex items-center justify-between gap-4">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide shrink-0">Jira</span>
+                <div className="flex items-center gap-2">
+                  {user?.hasJiraAccess && (
+                    <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                    <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                    </svg>
+                    Connected
+                  </span>
+                  )}
+                  <button
+                    onClick={() => setIsJiraModalOpen(true)}
+                    className="h-8 flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-xs font-medium px-3 rounded-lg transition-colors cursor-pointer"
+                  >
+                    {user?.hasJiraAccess ? "Update" : "Connect"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+        </main>
+      </div>
 
-          <div className="divide-y divide-gray-100">
-            <div className="px-6 py-4 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">First name</span>
-              <span className="text-sm text-gray-900 font-medium">{user?.firstName}</span>
-            </div>
-            <div className="px-6 py-4 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last name</span>
-              <span className="text-sm text-gray-900 font-medium">{user?.lastName}</span>
-            </div>
-            <div className="px-6 py-4 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Username</span>
-              <span className="text-sm text-gray-900 font-medium">@{user?.username}</span>
-            </div>
-            <div className="px-6 py-4 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</span>
-              <span className="text-sm text-gray-900 font-medium">{user?.email}</span>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+      {isJiraModalOpen && (
+        <JiraConfigModal
+          onClose={() => setIsJiraModalOpen(false)}
+          onSave={handleSaveJiraConfig}
+          isLoading={isSavingToken}
+          hasSavedToken={user?.hasJiraAccess ?? false}
+        />
+      )}
+    </>
   );
 }
 
