@@ -79,6 +79,11 @@ export interface PlayerLeftEvent {
   player: string;
 }
 
+export interface RevoteEvent {
+  action: string;
+  story: Story;
+}
+
 export interface VotesRevealedEvent {
   action: string;
   storyId: string;

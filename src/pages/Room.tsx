@@ -3,7 +3,7 @@ import {useContext, useEffect, useRef, useState} from "react";
 import {
   type AiEstimateResponse,
   type Player,
-  type PlayerJoinedEvent, type PlayerLeftEvent, type PlayerVotedEvent,
+  type PlayerJoinedEvent, type PlayerLeftEvent, type PlayerVotedEvent, type RevoteEvent,
   type RoomJoinedEvent,
   type Story,
   type StoryCreatedEvent,
@@ -32,6 +32,7 @@ const Room = () => {
   const [isPageLoading, setIsPageLoading] = useState<boolean>(true);
   const [isVotingLoading, setIsVotingLoading] = useState<boolean>(false);
   const [isRevealingVotesLoading, setIsRevealingVotesLoading] = useState<boolean>(false);
+  const [isRevotingLoading, setIsRevotingLoading] = useState<boolean>(false);
   const [isCreateStoryLoading, setIsCreateStoryLoading] = useState<boolean>(false);
   const [isSetActiveStoryLoading, setIsSetActiveStoryLoading] = useState<boolean>(false);
   const [isAiEstimateLoading, setIsAiEstimateLoading] = useState<boolean>(false);
@@ -144,7 +145,7 @@ const Room = () => {
         );
         setIsRevealingVotesLoading(false);
         setHasRevealedVotes(true);
-      } else if (eventData.action == "playerLeft") {
+      } else if (eventData.action === "playerLeft") {
         const playerLeftEvent = eventData as PlayerLeftEvent;
 
         setPlayers(prevPlayers => prevPlayers.filter(p => p.username !== playerLeftEvent.player));
@@ -158,6 +159,19 @@ const Room = () => {
           next.delete(playerLeftEvent.player);
           return next;
         });
+      } else if (eventData.action === "storyRevote") {
+        const revoteEvent = eventData as RevoteEvent;
+
+        setIsRevotingLoading(false);
+        setHasRevealedVotes(false);
+        setVotes(new Map());
+        setActiveStory(revoteEvent.story);
+        setAiEstimate(null);
+        setStories(prevStories =>
+          prevStories.map((story: Story) =>
+            story.storyId !== revoteEvent.story.storyId ? story : revoteEvent.story
+          )
+        );
       }
     }
 
@@ -189,9 +203,9 @@ const Room = () => {
   }
 
   const handleVote = (voteValue: string) => {
-    // if (voteValue === vote) {
-    //   return;
-    // }
+    if (voteValue === vote) {
+      return;
+    }
 
     wsRef.current?.send(JSON.stringify({
       action: "vote",
@@ -199,7 +213,7 @@ const Room = () => {
       storyId: activeStory?.storyId,
       voteValue: voteValue
     }));
-    // setVote(voteValue);
+    setVote(voteValue);
     setIsVotingLoading(true);
   }
 
@@ -210,6 +224,15 @@ const Room = () => {
       storyId: activeStory?.storyId
     }));
     setIsRevealingVotesLoading(true);
+  }
+
+  const handleRevote = () => {
+    wsRef.current?.send(JSON.stringify({
+      action: "revote",
+      roomId: roomId,
+      storyId: activeStory?.storyId
+    }));
+    setIsRevotingLoading(true);
   }
 
   const handleShowCopyUrlConfirmation = () => {
@@ -441,22 +464,32 @@ const Room = () => {
 
                 {roomOwner === user?.username && activeStory && (
                   <div className="mt-6 pt-6 border-t border-gray-100">
-                    {isRevealingVotesLoading ? (
+                    {isRevealingVotesLoading || isRevotingLoading ? (
                       <div className="flex items-center justify-center py-2 text-gray-400">
                         <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                         </svg>
-                        <span className="text-sm">Revealing votes...</span>
+                        <span className="text-sm">{isRevealingVotesLoading ? "Revealing Votes..." : "Revoting..."}</span>
                       </div>
                     ) : (
-                      <button
-                        onClick={handleRevealCards}
-                        disabled={hasRevealedVotes}
-                        className="w-full bg-gray-900 hover:bg-gray-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-colors duration-150 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        {hasRevealedVotes ? 'Votes revealed' : 'Reveal votes'}
-                      </button>
+                      hasRevealedVotes ? (
+                        <button
+                          onClick={handleRevote}
+                          disabled={isRevotingLoading}
+                          className="w-full bg-gray-900 hover:bg-gray-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-colors duration-150 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Revote
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleRevealCards}
+                          disabled={isRevealingVotesLoading}
+                          className="w-full bg-gray-900 hover:bg-gray-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-colors duration-150 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Reveal Votes
+                        </button>
+                      )
                     )}
                   </div>
                 )}
