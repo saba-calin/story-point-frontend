@@ -85,6 +85,7 @@ const Room = () => {
           });
           return newVotes;
         });
+        setVote(roomJoinedEvent.votes.find(vote => vote.username === user?.username)?.voteValue ?? null);
 
         activeStory?.storyEstimation ? setHasRevealedVotes(true) : setHasRevealedVotes(false);
         setIsPageLoading(false);
@@ -108,6 +109,7 @@ const Room = () => {
           });
           return newVotes;
         });
+        setVote(storySetActiveEvent.votes.find(vote => vote.username === user?.username)?.voteValue ?? null);
 
         storySetActiveEvent.story.storyEstimation ? setHasRevealedVotes(true) : setHasRevealedVotes(false);
         setIsSetActiveStoryLoading(false);
@@ -145,6 +147,7 @@ const Room = () => {
         );
         setIsRevealingVotesLoading(false);
         setHasRevealedVotes(true);
+        setVote(null);
       } else if (eventData.action === "playerLeft") {
         const playerLeftEvent = eventData as PlayerLeftEvent;
 
@@ -167,6 +170,7 @@ const Room = () => {
         setVotes(new Map());
         setActiveStory(revoteEvent.story);
         setAiEstimate(null);
+        setVote(null);
         setStories(prevStories =>
           prevStories.map((story: Story) =>
             story.storyId !== revoteEvent.story.storyId ? story : revoteEvent.story
