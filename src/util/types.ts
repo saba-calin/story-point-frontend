@@ -16,6 +16,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  accessTokenDuration: number;
   profilePictureKey: string;
   hasJiraAccess: boolean;
 }
@@ -134,6 +135,8 @@ export interface CreateRoomRequest {
 }
 
 export const VALID_VOTES = ["1", "2", "3", "5", "8", "13", "21", "?"];
+
+export const PUBLIC_ENDPOINTS = ["/auth/refresh", "/auth/log-out", "/auth/log-in", "/auth/sign-up"];
 
 export const ALLOWED_IMAGE_TYPES: Record<string, string> = {
   "image/jpg": ".jpg",

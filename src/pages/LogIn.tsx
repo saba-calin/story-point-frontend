@@ -4,6 +4,7 @@ import type {LogInRequest, User} from "../util/types.ts";
 import authApi from "../api/authApi.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
 import AuthLoader from "../components/AuthLoader.tsx";
+import {setAccessTokenExpiry} from "../api/axiosInstance.ts";
 
 const LogIn = () => {
 
@@ -33,9 +34,10 @@ const LogIn = () => {
         password: password
       };
       const response = await authApi.logIn(logInRequest);
-      const user: User = response.data.user;
+      const user: User = response.data.userContext;
 
       setUser(user);
+      setAccessTokenExpiry(user.accessTokenDuration);
       navigate("/dashboard");
 
     } catch (error: any) {

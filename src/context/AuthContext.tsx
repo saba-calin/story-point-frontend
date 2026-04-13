@@ -1,5 +1,6 @@
 import {createContext, type ReactNode, useEffect, useState} from "react";
 import type {AuthContextType, User} from "../util/types.ts";
+import {setAccessTokenExpiry} from "../api/axiosInstance.ts";
 import authApi from "../api/authApi.ts";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -11,9 +12,10 @@ const AuthProvider = ({children} : {children: ReactNode}) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await authApi.authMe();
-        const user: User = response.data;
+        const response = await authApi.refresh();
+        const user: User = response.data.userContext;
         setUser(user);
+        setAccessTokenExpiry(user.accessTokenDuration);
 
       } catch (error: any) {
         setUser(null);
