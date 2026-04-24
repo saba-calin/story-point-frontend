@@ -8,6 +8,7 @@ import Room from "./pages/Room.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import AuthProvider from "./context/AuthContext.tsx";
 import UserProfile from "./pages/UserProfile.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
 
 const App = () => {
   return (
@@ -19,9 +20,11 @@ const App = () => {
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/log-in" element={<LogIn />} />
 
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/user-profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-          <Route path="/room/:roomId" element={<ProtectedRoute><Room /></ProtectedRoute>} />
+          <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+
+          <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["user"]}><Dashboard /></ProtectedRoute>} />
+          <Route path="/user-profile" element={<ProtectedRoute allowedRoles={["user", "admin"]}><UserProfile /></ProtectedRoute>} />
+          <Route path="/room/:roomId" element={<ProtectedRoute allowedRoles={["user"]}><Room /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

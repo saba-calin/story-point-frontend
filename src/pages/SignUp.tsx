@@ -1,6 +1,6 @@
 import {useContext, useState} from "react";
 import {Navigate, useNavigate} from "react-router-dom";
-import type {SignUpRequest, User} from "../util/types.ts";
+import {type SignUpRequest, type User, UserRole} from "../util/types.ts";
 import authApi from "../api/authApi.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
 import AuthLoader from "../components/AuthLoader.tsx";
@@ -24,7 +24,7 @@ const SignUp = () => {
     return <AuthLoader />;
   }
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={user.role === UserRole.USER ? "/dashboard" : "/admin-dashboard"} replace />
   }
 
   const handleSignUp = async (event: any) => {
@@ -51,6 +51,7 @@ const SignUp = () => {
 
       setUser(user);
       setAccessTokenExpiry(user.accessTokenDuration);
+      // no need to route based on role because all users have the 'USER' role as default
       navigate("/dashboard");
 
     } catch (error: any) {

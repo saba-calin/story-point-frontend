@@ -2,7 +2,7 @@ import {useNavigate} from "react-router-dom";
 import {type ChangeEvent, useContext, useRef, useState} from "react";
 import {AuthContext} from "../context/AuthContext.tsx";
 import userApi from "../api/userApi.ts";
-import {ALLOWED_IMAGE_TYPES, type AvatarUploadUrlResponse} from "../util/types.ts";
+import {ALLOWED_IMAGE_TYPES, type AvatarUploadUrlResponse, UserRole} from "../util/types.ts";
 import axios from "axios";
 import JiraConfigModal from "../components/modal/JiraConfigModal.tsx";
 
@@ -229,25 +229,27 @@ const UserProfile = () => {
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</span>
                 <span className="text-sm text-gray-900 font-medium">{user?.email}</span>
               </div>
-              <div className="px-6 py-4 flex items-center justify-between gap-4">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide shrink-0">Jira</span>
-                <div className="flex items-center gap-2">
-                  {user?.hasJiraAccess && (
-                    <span className="flex items-center gap-1.5 text-xs text-gray-400">
+              {user?.role === UserRole.USER && (
+                <div className="px-6 py-4 flex items-center justify-between gap-4">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide shrink-0">Jira</span>
+                  <div className="flex items-center gap-2">
+                    {user?.hasJiraAccess && (
+                      <span className="flex items-center gap-1.5 text-xs text-gray-400">
                     <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                     </svg>
                     Connected
                   </span>
-                  )}
-                  <button
-                    onClick={() => setIsJiraModalOpen(true)}
-                    className="h-8 flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-xs font-medium px-3 rounded-lg transition-colors cursor-pointer"
-                  >
-                    {user?.hasJiraAccess ? "Update" : "Connect"}
-                  </button>
+                    )}
+                    <button
+                      onClick={() => setIsJiraModalOpen(true)}
+                      className="h-8 flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-xs font-medium px-3 rounded-lg transition-colors cursor-pointer"
+                    >
+                      {user?.hasJiraAccess ? "Update" : "Connect"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </main>

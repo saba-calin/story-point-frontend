@@ -16,9 +16,21 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  role: UserRole;
+  isBanned: boolean;
   accessTokenDuration: number;
   profilePictureKey: string;
   hasJiraAccess: boolean;
+}
+
+export const UserRole = {
+  USER: "user",
+  ADMIN: "admin"
+} as const;
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+export interface BanUserRequest {
+  username: string;
 }
 
 export interface AuthContextType {
@@ -170,4 +182,10 @@ export interface RoomResponse {
 export interface AvatarUploadUrlResponse {
   uploadUrl: string;
   profilePictureKey: string;
+}
+
+export interface UsersResponse {
+  users: User[];
+  hasMore: boolean;
+  nextToken?: string;
 }

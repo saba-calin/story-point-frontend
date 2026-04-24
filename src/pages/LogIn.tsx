@@ -1,6 +1,6 @@
 import {useContext, useState} from "react";
 import {Navigate, useNavigate} from "react-router-dom";
-import type {LogInRequest, User} from "../util/types.ts";
+import {type LogInRequest, type User, UserRole} from "../util/types.ts";
 import authApi from "../api/authApi.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
 import AuthLoader from "../components/AuthLoader.tsx";
@@ -20,7 +20,7 @@ const LogIn = () => {
     return <AuthLoader />;
   }
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={user.role === UserRole.USER ? "/dashboard" : "/admin-dashboard"} replace />
   }
 
   const handleLogIn = async (event: any) => {
@@ -38,7 +38,8 @@ const LogIn = () => {
 
       setUser(user);
       setAccessTokenExpiry(user.accessTokenDuration);
-      navigate("/dashboard");
+      console.log(user.role);
+      user.role === UserRole.USER ? navigate("/dashboard") : navigate("/admin-dashboard");
 
     } catch (error: any) {
       setErrorMessage(error.response.data.message || "Something went wrong");
