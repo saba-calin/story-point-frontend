@@ -6,8 +6,16 @@ import type {RoomResponse, User, UsersResponse} from "../util/types.ts";
 import roomApi from "../api/roomApi.ts";
 import userApi from "../api/userApi.ts";
 import authApi from "../api/authApi.ts";
+import adminApi from "../api/adminApi.ts";
 
-type Tab = "rooms" | "users";
+type Tab = "rooms" | "users" | "costExplorer";
+
+interface CostEntry {
+  period: string;
+  service: string;
+  cost: string;
+  unit: string;
+}
 
 const AdminDashboard = () => {
 
@@ -31,6 +39,9 @@ const AdminDashboard = () => {
   const [userTokenHistory, setUserTokenHistory] = useState<(string | undefined)[]>([undefined]);
   const [userCurrentPage, setUserCurrentPage] = useState<number>(0);
   const [banningUser, setBanningUser] = useState<string | null>(null);
+
+  const [costData, setCostData] = useState<CostEntry[] | null>(null);
+  const [isFetchingCost, setIsFetchingCost] = useState<boolean>(true);
 
   const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
   const [isImageError, setIsImageError] = useState<boolean>(false);
@@ -78,6 +89,21 @@ const AdminDashboard = () => {
       }
     };
     fetchUsers();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "costExplorer" || costData) return;
+    const fetchCost = async () => {
+      try {
+        const response = await adminApi.costExplorer();
+        setCostData(response.data);
+      } catch (error: any) {
+        console.log(error);
+      } finally {
+        setIsFetchingCost(false);
+      }
+    };
+    fetchCost();
   }, [activeTab]);
 
   const handleNextRoomPage = async () => {
@@ -291,10 +317,10 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">
-              {activeTab === "rooms" ? "All rooms" : "All users"}
+              {activeTab === "rooms" ? "All rooms" : activeTab === "users" ? "All users" : "Cost Explorer"}
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
-              {activeTab === "rooms" ? "View and manage all planning rooms." : "View and manage all users."}
+              {activeTab === "rooms" ? "View and manage all planning rooms." : activeTab === "users" ? "View and manage all users." : "Monthly AWS service costs breakdown."}
             </p>
           </div>
         </div>
@@ -323,6 +349,19 @@ const AdminDashboard = () => {
           >
             Users
             {activeTab === "users" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("costExplorer")}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors relative cursor-pointer ${
+              activeTab === "costExplorer"
+                ? "text-gray-900"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            Cost Explorer
+            {activeTab === "costExplorer" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
             )}
           </button>
@@ -460,6 +499,113 @@ const AdminDashboard = () => {
                 <div className="text-2xl mb-3">◇</div>
                 <p className="text-sm font-medium text-gray-500">No users</p>
                 <p className="text-xs text-gray-400 mt-1">No users have signed up yet.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "costExplorer" && (
+          <>
+            {isFetchingCost ? (
+              <div className="flex items-center justify-center py-20 text-gray-400">
+                <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                <span className="text-sm">Loading cost data...</span>
+              </div>
+            ) : costData && costData.length > 0 ? (() => {
+              const periods = [...new Set(costData.map(e => e.period))].sort();
+              const services = [...new Set(costData.map(e => e.service))].sort();
+
+              const costMap = new Map<string, string>();
+              costData.forEach(e => costMap.set(`${e.period}|${e.service}`, e.cost));
+
+              const periodTotals = periods.map(p =>
+                costData.filter(e => e.period === p).reduce((sum, e) => sum + parseFloat(e.cost), 0)
+              );
+              const grandTotal = periodTotals.reduce((sum, t) => sum + t, 0);
+
+              const formatCost = (cost: number) => `$${cost.toFixed(2)}`;
+
+              const formatMonth = (period: string) => {
+                const date = new Date(period + "T00:00:00");
+                return date.toLocaleDateString("en-US", {month: "short", year: "numeric"});
+              };
+
+              return (
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Cost by service</p>
+                        <p className="text-xs text-gray-400">{periods.length} months &middot; {services.length} services</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Total</p>
+                      <p className="text-lg font-semibold text-gray-900">{formatCost(grandTotal)}</p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide sticky left-0 bg-white">Service</th>
+                          {periods.map(p => (
+                            <th key={p} className="text-right px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide whitespace-nowrap">{formatMonth(p)}</th>
+                          ))}
+                          <th className="text-right px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {services.map(service => {
+                          const serviceTotal = periods.reduce((sum, p) => {
+                            const val = costMap.get(`${p}|${service}`);
+                            return sum + (val ? parseFloat(val) : 0);
+                          }, 0);
+                          if (serviceTotal === 0) return null;
+                          return (
+                            <tr key={service} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-5 py-3 text-gray-700 font-medium whitespace-nowrap sticky left-0 bg-white">{service}</td>
+                              {periods.map(p => {
+                                const val = costMap.get(`${p}|${service}`);
+                                const cost = val ? parseFloat(val) : 0;
+                                return (
+                                  <td key={p} className={`text-right px-4 py-3 tabular-nums ${cost === 0 ? "text-gray-300" : "text-gray-700"}`}>
+                                    {formatCost(cost)}
+                                  </td>
+                                );
+                              })}
+                              <td className="text-right px-5 py-3 font-semibold text-gray-900 tabular-nums">{formatCost(serviceTotal)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-gray-200 bg-gray-50">
+                          <td className="px-5 py-3 font-semibold text-gray-900 sticky left-0 bg-gray-50">Total</td>
+                          {periodTotals.map((total, i) => (
+                            <td key={periods[i]} className="text-right px-4 py-3 font-semibold text-gray-900 tabular-nums">{formatCost(total)}</td>
+                          ))}
+                          <td className="text-right px-5 py-3 font-bold text-gray-900 tabular-nums">{formatCost(grandTotal)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              );
+            })() : (
+              <div className="border border-dashed border-gray-200 rounded-xl py-16 flex flex-col items-center justify-center text-center">
+                <div className="text-2xl mb-3">◇</div>
+                <p className="text-sm font-medium text-gray-500">No cost data</p>
+                <p className="text-xs text-gray-400 mt-1">No cost data is available yet.</p>
               </div>
             )}
           </>
