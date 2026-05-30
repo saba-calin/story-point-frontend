@@ -7,6 +7,10 @@ import roomApi from "../api/roomApi.ts";
 import userApi from "../api/userApi.ts";
 import authApi from "../api/authApi.ts";
 import adminApi from "../api/adminApi.ts";
+import {Bar} from "react-chartjs-2";
+import {Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend} from "chart.js";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 type Tab = "rooms" | "users" | "costExplorer";
 
@@ -533,7 +537,109 @@ const AdminDashboard = () => {
                 return date.toLocaleDateString("en-US", {month: "short", year: "numeric"});
               };
 
+              const chartFormatMonth = (period: string) => {
+                const date = new Date(period + "T00:00:00");
+                return date.toLocaleDateString("en-US", {month: "short", year: "2-digit"});
+              };
+
+              const serviceTotals = services.map(s =>
+                periods.reduce((sum, p) => {
+                  const val = costMap.get(`${p}|${s}`);
+                  return sum + (val ? parseFloat(val) : 0);
+                }, 0)
+              );
+              const topServices = services
+                .map((s, i) => ({service: s, total: serviceTotals[i]}))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5)
+                .map(s => s.service);
+
+              const chartColors = ["#00d4aa", "#ff6b35", "#a855f7", "#3b82f6", "#f59e0b", "#6b7280"];
+
+              const chartDatasets = topServices.map((service, i) => ({
+                label: service,
+                data: periods.map(p => {
+                  const val = costMap.get(`${p}|${service}`);
+                  return val ? parseFloat(parseFloat(val).toFixed(2)) : 0;
+                }),
+                backgroundColor: chartColors[i],
+              }));
+
+              const othersData = periods.map(p => {
+                const topTotal = topServices.reduce((sum, s) => {
+                  const val = costMap.get(`${p}|${s}`);
+                  return sum + (val ? parseFloat(val) : 0);
+                }, 0);
+                return parseFloat((periodTotals[periods.indexOf(p)] - topTotal).toFixed(2));
+              });
+              if (othersData.some(v => v > 0.005)) {
+                chartDatasets.push({
+                  label: "Others",
+                  data: othersData,
+                  backgroundColor: chartColors[5],
+                });
+              }
+
+              const currentMonthTotal = periodTotals[periodTotals.length - 1];
+              const prevMonthTotal = periodTotals.length > 1 ? periodTotals[periodTotals.length - 2] : 0;
+              const pctChange = prevMonthTotal > 0 ? Math.round(((currentMonthTotal - prevMonthTotal) / prevMonthTotal) * 100) : 0;
+
               return (
+                <div className="space-y-6">
+                  <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden p-6">
+                    <div className="flex items-start justify-between mb-6">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">Cost and usage</h3>
+                        <div className="mb-4">
+                          <p className="text-xs text-gray-400">Current month</p>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold text-gray-900">{formatCost(currentMonthTotal)}</span>
+                            {pctChange !== 0 && (
+                              <span className={`text-xs font-medium ${pctChange < 0 ? "text-green-600" : "text-red-500"}`}>
+                                {pctChange < 0 ? "▼" : "▲"} {Math.abs(pctChange)}%
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-64">
+                      <Bar
+                        data={{
+                          labels: periods.map(p => chartFormatMonth(p)),
+                          datasets: chartDatasets,
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            x: {
+                              stacked: true,
+                              ticks: {color: "#6b7280"},
+                              grid: {display: false},
+                              title: {display: true, text: "Month (Year)", color: "#6b7280"},
+                            },
+                            y: {
+                              stacked: true,
+                              ticks: {color: "#6b7280", callback: (v) => `$${v}`},
+                              grid: {color: "rgba(0,0,0,0.05)"},
+                              title: {display: true, text: "Cost ($)", color: "#6b7280"},
+                            },
+                          },
+                          plugins: {
+                            legend: {
+                              position: "bottom",
+                              labels: {color: "#374151", usePointStyle: true, pointStyle: "rectRounded", padding: 16},
+                            },
+                            tooltip: {
+                              callbacks: {label: (ctx) => `${ctx.dataset.label}: $${(ctx.parsed.y ?? 0).toFixed(2)}`},
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                   <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -599,6 +705,7 @@ const AdminDashboard = () => {
                       </tfoot>
                     </table>
                   </div>
+                </div>
                 </div>
               );
             })() : (
