@@ -41,6 +41,8 @@ const Room = () => {
   const [imageLoadingMap, setImageLoadingMap] = useState<Map<string, boolean>>(new Map());
   const [imageErrorMap, setImageErrorMap] = useState<Map<string, boolean>>(new Map());
 
+  const [wsError, setWsError] = useState<boolean>(false);
+
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState<boolean>(false);
   const [setActiveStoryModalData, setSetActiveStoryModalData] = useState<{
     storyId: string,
@@ -70,6 +72,11 @@ const Room = () => {
     ws.onmessage = (event) => {
       const eventData = JSON.parse(event.data);
       console.log("Message received: ", eventData);
+
+      if (eventData.message === "Too Many Requests") {
+        setWsError(true);
+        return;
+      }
 
       if (eventData.action === "roomJoined") {
         const roomJoinedEvent = eventData as RoomJoinedEvent;
@@ -181,6 +188,7 @@ const Room = () => {
 
     ws.onerror = (event) => {
       console.log(event);
+      setWsError(true);
     }
 
     return () => ws.close();
@@ -602,6 +610,12 @@ const Room = () => {
           isRoomOwner={roomOwner === user?.username}
           isLoading={isSetActiveStoryLoading}
         />
+      )}
+
+      {wsError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg z-50">
+          There was an error, please refresh the page
+        </div>
       )}
     </div>
   );
